@@ -1,0 +1,26 @@
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Database ---
+SQLAlchemy==2.0.36
+
+# --- Security ---
+argon2-cffi==23.1.0
+itsdangerous==2.2.0
+cryptography==50.0.1
+
+# --- AI / HTTP ---
+httpx==0.28.1
+requests==2.32.3
+
+# --- Media ---
+# Ships a static FFmpeg binary so the app works without a system install.
+# A system FFmpeg (if present on PATH) always takes priority.
+imageio-ffmpeg==0.5.1
+
+# --- Transcription (CPU, int8) ---
+faster-whisper==1.1.1

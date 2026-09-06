@@ -1,0 +1,70 @@
+# =============================================================================
+# Fastclip
+# =============================================================================
+
+# --- Secrets -----------------------------------------------------------------
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.pem
+*.key
+
+# --- Donnees locales : videos importees, exports, base SQLite ---------------
+backend/data/
+backend/storage/
+data/
+storage/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# --- Medias (jamais versionnes) ---------------------------------------------
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.avi
+*.wav
+*.mp3
+*.m4a
+*.srt
+*.ass
+!frontend/public/**/*.svg
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node --------------------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+*.local
+
+# --- Logs --------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Editeurs / OS -----------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
