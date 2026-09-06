@@ -15,12 +15,12 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { to: '/app', label: 'Tableau de bord', icon: 'dashboard', end: true },
-  { to: '/app/nouveau', label: 'Nouveau projet', icon: 'plus' },
-  { to: '/app/projets', label: 'Mes projets', icon: 'folder' },
-  { to: '/app/modeles', label: 'Modèles de sous-titres', icon: 'captions' },
-  { to: '/app/corbeille', label: 'Corbeille', icon: 'trash' },
-  { to: '/app/aide', label: 'Aide', icon: 'help' },
+  { to: '/app', label: 'Dashboard', icon: 'dashboard', end: true },
+  { to: '/app/nouveau', label: 'New project', icon: 'plus' },
+  { to: '/app/projets', label: 'My projects', icon: 'folder' },
+  { to: '/app/modeles', label: 'Caption templates', icon: 'captions' },
+  { to: '/app/corbeille', label: 'Trash', icon: 'trash' },
+  { to: '/app/aide', label: 'Help', icon: 'help' },
 ]
 
 /**
@@ -67,7 +67,7 @@ function QueueIndicator({ queue }: { queue: QueueSnapshot | null }) {
     return (
       <span className="hidden items-center gap-2 rounded-lg border border-ink-500 bg-ink-800 px-3 py-1.5 text-xs text-muted sm:inline-flex">
         <span className="h-1.5 w-1.5 rounded-full bg-positive-500" aria-hidden="true" />
-        File libre
+        Queue clear
       </span>
     )
   }
@@ -88,11 +88,11 @@ function QueueIndicator({ queue }: { queue: QueueSnapshot | null }) {
         <span className="block truncate text-xs font-medium text-chalk">
           {active
             ? `${active.stage_detail ?? statusMeta(active.stage).label} - ${active.project_name}`
-            : `${waiting} tâche${waiting > 1 ? 's' : ''} en attente`}
+            : `${waiting} job${waiting > 1 ? 's' : ''} waiting`}
         </span>
         {active && (
           <span className="mt-1 block">
-            <ProgressBar value={active.progress} size="sm" label="Progression de la tâche" />
+            <ProgressBar value={active.progress} size="sm" label="Job progress" />
           </span>
         )}
       </span>
@@ -121,7 +121,7 @@ function SidebarContent({
       await logout()
       navigate('/')
     } catch (error) {
-      notifyError(error, 'Déconnexion impossible.')
+      notifyError(error, 'Unable to sign out.')
     }
   }
 
@@ -129,7 +129,7 @@ function SidebarContent({
     <div className="flex h-full flex-col">
       <div className={`flex h-16 items-center border-b border-ink-500 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
         {collapsed ? (
-          <NavLink to="/app" aria-label="Fastclip, tableau de bord">
+          <NavLink to="/app" aria-label="Fastclip dashboard">
             <LogoMark size={30} />
           </NavLink>
         ) : (
@@ -137,7 +137,7 @@ function SidebarContent({
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Navigation principale">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main navigation">
         {NAV.map((item) => (
           <NavLink
             key={item.to}
@@ -200,12 +200,12 @@ function SidebarContent({
                   <span className="block truncate text-xs text-muted">{user.email}</span>
                 </span>
               )}
-              {collapsed && <span className="sr-only">Paramètres du compte</span>}
+              {collapsed && <span className="sr-only">Account settings</span>}
             </NavLink>
             {!collapsed && (
               <IconButton
                 icon="settings"
-                label="Paramètres"
+                label="Settings"
                 size="sm"
                 onClick={() => {
                   onNavigate?.()
@@ -217,13 +217,13 @@ function SidebarContent({
         )}
         <button
           onClick={handleLogout}
-          title={collapsed ? 'Se déconnecter' : undefined}
+          title={collapsed ? 'Sign out' : undefined}
           className={`mt-2 flex w-full items-center rounded-lg text-sm text-muted
             transition-[background-color,color,transform] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-0.5 hover:bg-flame-500/8 hover:text-chalk
             ${collapsed ? 'h-10 justify-center' : 'gap-3 px-3 py-2'}`}
         >
           <Icon name="logout" size={18} />
-          {collapsed ? <span className="sr-only">Se déconnecter</span> : 'Se déconnecter'}
+          {collapsed ? <span className="sr-only">Sign out</span> : 'Sign out'}
         </button>
       </div>
     </div>
@@ -270,7 +270,7 @@ export function AppShell() {
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70]
           focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
       >
-        Aller au contenu principal
+        Skip to main content
       </a>
 
       {/* Desktop rail */}
@@ -281,7 +281,7 @@ export function AppShell() {
         <SidebarContent collapsed={collapsed} />
         <button
           onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? 'Déplier la barre latérale' : 'Replier la barre latérale'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute -right-3 top-20 grid h-6 w-6 place-items-center rounded-full
             border border-ink-500 bg-ink-700 text-muted transition-[color,background-color,border-color,transform] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]
             hover:scale-105 hover:border-flame-500 hover:bg-ink-600 hover:text-flame-300"
@@ -313,7 +313,7 @@ export function AppShell() {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-ink-500 bg-ink-900/90 px-4 shadow-[0_1px_0_rgba(255,255,255,.02)] backdrop-blur sm:px-6">
           <IconButton
             icon="menu"
-            label="Ouvrir la navigation"
+            label="Open navigation"
             className="lg:hidden"
             onClick={() => setDrawerOpen(true)}
           />
@@ -330,7 +330,7 @@ export function AppShell() {
               onClick={() => navigate('/app/nouveau')}
               className="hidden sm:inline-flex"
             >
-              Importer
+              Upload
             </Button>
           </div>
         </header>

@@ -8,18 +8,18 @@ import { Logo } from './ui'
 const HIGHLIGHTS = [
   {
     icon: 'sparkle' as const,
-    title: 'Trois propositions, expliquées',
-    body: 'Un score, une catégorie et la raison du choix. Tu gardes la décision finale.',
+    title: 'Three explained suggestions',
+    body: 'A score, a category, and the reason behind the pick. You make the final call.',
   },
   {
     icon: 'scissors' as const,
-    title: 'Ajustement au dixième de seconde',
-    body: 'Poignées de début et de fin, transcription synchronisée, aperçu immédiat.',
+    title: 'Frame-accurate trimming',
+    body: 'Start and end handles, synced transcription, and an instant preview.',
   },
   {
     icon: 'shield' as const,
-    title: 'Supprimé après 24 heures',
-    body: 'Sources et exports sont effacés automatiquement. Seul le texte part à l’analyse.',
+    title: 'Deleted after 24 hours',
+    body: 'Source videos and exports are erased automatically. Only text is analyzed.',
   },
 ]
 
@@ -45,7 +45,7 @@ export function AuthLayout({
           rows={9}
           speed={0.35}
           mouseInteraction
-          mouseStrength={1}
+          mouseStrength={0.78}
           mouseRadius={0.32}
           opacity={0.58}
           grain
@@ -60,10 +60,10 @@ export function AuthLayout({
           <div className="max-w-md animate-auth-copy">
             <span className="inline-flex items-center gap-2 rounded-full border border-flame-500/30 bg-ink-900/45 px-3 py-1.5 text-xs font-medium text-flame-300 backdrop-blur-xl">
               <Icon name="sparkle" size={13} />
-              Le montage qui va droit au moment fort
+              Editing that gets straight to the best moment
             </span>
             <h2 className="mt-5 text-balance text-3xl font-extrabold leading-tight tracking-tight text-chalk">
-              Des vidéos longues aux clips qui retiennent l’attention.
+              Turn long videos into clips that hold attention.
             </h2>
             <ul className="mt-9 space-y-6">
               {HIGHLIGHTS.map((item) => (
@@ -79,7 +79,7 @@ export function AuthLayout({
               ))}
             </ul>
           </div>
-          <p className="text-xs text-muted">Pensé pour les créateurs qui veulent publier plus vite.</p>
+          <p className="text-xs text-muted">Built for creators who want to publish faster.</p>
         </div>
       </aside>
 
@@ -88,7 +88,7 @@ export function AuthLayout({
         <div className="flex items-center justify-between lg:hidden">
           <Logo size="sm" />
           <Link to="/" className="text-sm text-muted transition-colors hover:text-chalk">
-            Retour
+            Back
           </Link>
         </div>
 

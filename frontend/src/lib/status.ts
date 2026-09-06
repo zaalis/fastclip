@@ -17,67 +17,67 @@ export interface StatusMeta {
 
 export const STATUS_META: Record<ProjectStatus, StatusMeta> = {
   draft: {
-    label: 'Brouillon',
+    label: 'Draft',
     icon: 'draft',
     tone: 'neutral',
     busy: false,
-    description: 'Projet créé, aucune vidéo importée.',
+    description: 'Project created, no video uploaded.',
   },
   uploading: {
-    label: 'Téléversement',
+    label: 'Uploading',
     icon: 'upload',
     tone: 'progress',
     busy: true,
-    description: 'La vidéo est en cours d’envoi vers le serveur.',
+    description: 'The video is uploading to the server.',
   },
   queued: {
-    label: 'En attente',
+    label: 'Queued',
     icon: 'clock',
     tone: 'neutral',
     busy: true,
-    description: 'La tâche attend son tour dans la file.',
+    description: 'The job is waiting in the queue.',
   },
   transcribing: {
     label: 'Transcription',
     icon: 'wave',
     tone: 'progress',
     busy: true,
-    description: 'Extraction de l’audio et transcription horodatée.',
+    description: 'Extracting audio and creating a timestamped transcript.',
   },
   analyzing: {
-    label: 'Analyse IA',
+    label: 'AI analysis',
     icon: 'sparkle',
     tone: 'progress',
     busy: true,
-    description: 'La transcription est analysée pour trouver trois extraits.',
+    description: 'The transcript is analyzed to find three clip suggestions.',
   },
   rendering: {
-    label: 'Génération du Short',
+    label: 'Rendering clip',
     icon: 'film',
     tone: 'accent',
     busy: true,
-    description: 'Découpe, recadrage vertical, sous-titres et encodage.',
+    description: 'Trimming, vertical framing, captions, and encoding.',
   },
   completed: {
-    label: 'Terminé',
+    label: 'Completed',
     icon: 'check',
     tone: 'positive',
     busy: false,
-    description: 'Le traitement est termine.',
+    description: 'Processing is complete.',
   },
   failed: {
-    label: 'Échec',
+    label: 'Failed',
     icon: 'alert',
     tone: 'negative',
     busy: false,
-    description: 'Le traitement a échoué.',
+    description: 'Processing failed.',
   },
   cancelled: {
-    label: 'Annulé',
+    label: 'Cancelled',
     icon: 'stop',
     tone: 'neutral',
     busy: false,
-    description: 'La tâche a été annulée.',
+    description: 'The job was cancelled.',
   },
 }
 
@@ -94,19 +94,19 @@ export const TONE_CLASSES: Record<StatusMeta['tone'], string> = {
 }
 
 export const SUBTITLE_STYLE_LABELS: Record<string, { name: string; hint: string }> = {
-  clean: { name: 'Épuré', hint: 'Texte blanc, contour fin. Discret et lisible.' },
-  punch: { name: 'Punch', hint: 'Majuscules, contour épais. Style TikTok.' },
-  accent: { name: 'Accent', hint: 'Fond colore plein. Très visible.' },
+  clean: { name: 'Clean', hint: 'White text, thin outline. Subtle and readable.' },
+  punch: { name: 'Punch', hint: 'Uppercase text, thick outline. TikTok-style.' },
+  accent: { name: 'Accent', hint: 'Solid color background. Highly visible.' },
 }
 
 export const SUBTITLE_SIZE_LABELS: Record<string, string> = {
-  small: 'Petite',
-  medium: 'Moyenne',
-  large: 'Grande',
+  small: 'Small',
+  medium: 'Medium',
+  large: 'Large',
 }
 
 export const SUBTITLE_POSITION_LABELS: Record<string, string> = {
-  top: 'Haut',
-  middle: 'Milieu',
-  bottom: 'Bas',
+  top: 'Top',
+  middle: 'Middle',
+  bottom: 'Bottom',
 }

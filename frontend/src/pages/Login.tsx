@@ -24,10 +24,10 @@ export default function Login() {
 
   const validate = () => {
     const next: typeof errors = {}
-    if (!email.trim()) next.email = 'Entre ton adresse email.'
+    if (!email.trim()) next.email = 'Enter your email address.'
     else if (!/^[^@\s]+@[^@\s.]+\.[^@\s]{2,}$/.test(email.trim()))
-      next.email = 'Cette adresse email ne semble pas valide.'
-    if (!password) next.password = 'Entre ton mot de passe.'
+      next.email = 'This email address does not look valid.'
+    if (!password) next.password = 'Enter your password.'
     setErrors(next)
     return next
   }
@@ -47,12 +47,12 @@ export default function Login() {
     setSubmitting(true)
     try {
       await login(email.trim(), password, remember)
-      notify('Content de te revoir !')
+      notify('Welcome back!')
       const from = (location.state as { from?: string } | null)?.from
       navigate(from && from.startsWith('/app') ? from : '/app', { replace: true })
     } catch (error) {
       setFormError(
-        error instanceof ApiError ? error.message : 'Connexion impossible pour le moment.',
+        error instanceof ApiError ? error.message : 'Unable to sign in right now.',
       )
       passwordRef.current?.focus()
     } finally {
@@ -62,13 +62,13 @@ export default function Login() {
 
   return (
     <AuthLayout
-      title="Connexion"
-      subtitle="Retrouve tes projets et tes clips exportés."
+      title="Sign in"
+      subtitle="Get back to your projects and exported clips."
       footer={
         <p>
-          Pas encore de compte ?{' '}
+          New to Fastclip?{' '}
           <Link to="/inscription" className="link font-medium">
-            Créer un compte
+            Create an account
           </Link>
         </p>
       }
@@ -76,7 +76,7 @@ export default function Login() {
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {formError && (
           <div role="alert">
-            <Alert tone="error" title="Connexion refusée">
+            <Alert tone="error" title="Sign-in denied">
               {formError}
             </Alert>
           </div>
@@ -84,11 +84,11 @@ export default function Login() {
 
         <Field
           ref={emailRef}
-          label="Adresse email"
+          label="Email address"
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder="toi@exemple.com"
+          placeholder="you@example.com"
           icon="mail"
           required
           value={email}
@@ -101,7 +101,7 @@ export default function Login() {
 
         <Field
           ref={passwordRef}
-          label="Mot de passe"
+          label="Password"
           type={showPassword ? 'text' : 'password'}
           autoComplete="current-password"
           placeholder="********"
@@ -118,7 +118,7 @@ export default function Login() {
               type="button"
               size="sm"
               icon={showPassword ? 'eye-off' : 'eye'}
-              label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              label={showPassword ? 'Hide password' : 'Show password'}
               onClick={() => setShowPassword((value) => !value)}
             />
           }
@@ -133,15 +133,15 @@ export default function Login() {
               className="h-4 w-4 cursor-pointer rounded border-ink-400 bg-ink-900 text-blue-600
                 focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0"
             />
-            Se souvenir de moi
+            Remember me
           </label>
           <Link to="/mot-de-passe-oublie" className="link text-sm">
-            Mot de passe oublié ?
+            Forgot your password?
           </Link>
         </div>
 
         <Button type="submit" size="lg" block loading={submitting}>
-          {submitting ? 'Connexion...' : 'Se connecter'}
+          {submitting ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
     </AuthLayout>

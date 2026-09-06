@@ -1,4 +1,4 @@
-/** Formatting helpers. All user-facing strings are French. */
+/** Formatting helpers. All user-facing strings are English. */
 
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
@@ -21,8 +21,8 @@ export function formatPrecise(seconds: number): string {
 }
 
 export function formatBytes(bytes: number): string {
-  if (!bytes) return '0 Mo'
-  const units = ['o', 'Ko', 'Mo', 'Go']
+  if (!bytes) return '0 MB'
+  const units = ['B', 'KB', 'MB', 'GB']
   const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
   const value = bytes / 1024 ** index
   return `${value.toFixed(value >= 100 || index === 0 ? 0 : 1)} ${units[index]}`
@@ -35,8 +35,8 @@ export function formatSavedTime(seconds: number): string {
   return `${hours.toFixed(hours >= 10 ? 0 : 1)} h`
 }
 
-const RELATIVE = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
-const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
+const RELATIVE = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
@@ -67,30 +67,22 @@ export function formatRelative(iso: string): string {
   return formatDate(iso)
 }
 
-/** "dans 21 h" / "bientot" for the 24-hour retention countdown. */
+/** Relative labels for the 24-hour retention countdown. */
 export function formatExpiry(iso: string | null): string | null {
   if (!iso) return null
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return null
   const hours = (date.getTime() - Date.now()) / 3_600_000
-  if (hours <= 0) return 'imminente'
-  if (hours < 1) return `dans ${Math.max(1, Math.round(hours * 60))} min`
-  return `dans ${Math.round(hours)} h`
+  if (hours <= 0) return 'imminent'
+  if (hours < 1) return `in ${Math.max(1, Math.round(hours * 60))} min`
+  return `in ${Math.round(hours)} h`
 }
 
 export function languageLabel(code: string | null): string {
-  if (!code) return 'Non détectée'
+  if (!code) return 'Not detected'
   const names: Record<string, string> = {
-    fr: 'Français',
-    en: 'Anglais',
-    es: 'Espagnol',
-    de: 'Allemand',
-    it: 'Italien',
-    pt: 'Portugais',
-    nl: 'Néerlandais',
-    ar: 'Arabe',
-    ja: 'Japonais',
-    zh: 'Chinois',
+    fr: 'French', en: 'English', es: 'Spanish', de: 'German', it: 'Italian',
+    pt: 'Portuguese', nl: 'Dutch', ar: 'Arabic', ja: 'Japanese', zh: 'Chinese',
   }
   return names[code] ?? code.toUpperCase()
 }

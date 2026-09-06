@@ -44,11 +44,11 @@ const MAX_CLIP = 180
 const ADVANCED_STYLES = [
   { value: 'clean', label: 'Classique' }, { value: 'punch', label: 'Impact' },
   { value: 'accent', label: 'Accent' }, { value: 'minimal', label: 'Minimal' },
-  { value: 'neon', label: 'Néon' },
+  { value: 'neon', label: 'Neon' },
 ] as const
 const FONTS = [
   { value: 'sans', label: 'Sans' }, { value: 'bold', label: 'Gras' },
-  { value: 'serif', label: 'Sérif' }, { value: 'mono', label: 'Mono' },
+  { value: 'serif', label: 'Serif' }, { value: 'mono', label: 'Mono' },
 ] as const
 const EFFECTS = [
   { value: 'none', label: 'Aucun' }, { value: 'shadow', label: 'Ombre' },
@@ -58,9 +58,9 @@ const SPEEDS = ['0.5', '0.75', '1', '1.25', '1.5', '2'] as const
 
 const EXPORT_FORMATS = {
   vertical_hd: { label: 'Vertical HD', dimensions: '1080 × 1920', ratio: '9:16', aspect: '9 / 16' },
-  vertical: { label: 'Vertical léger', dimensions: '720 × 1280', ratio: '9:16', aspect: '9 / 16' },
-  square: { label: 'Carré', dimensions: '1080 × 1080', ratio: '1:1', aspect: '1 / 1' },
-  landscape_hd: { label: 'Paysage HD', dimensions: '1920 × 1080', ratio: '16:9', aspect: '16 / 9' },
+  vertical: { label: 'Vertical lite', dimensions: '720 × 1280', ratio: '9:16', aspect: '9 / 16' },
+  square: { label: 'Square', dimensions: '1080 × 1080', ratio: '1:1', aspect: '1 / 1' },
+  landscape_hd: { label: 'Landscape HD', dimensions: '1920 × 1080', ratio: '16:9', aspect: '16 / 9' },
 } as const
 type ExportFormat = keyof typeof EXPORT_FORMATS
 
@@ -315,7 +315,7 @@ export default function Editor() {
     duration < MIN_CLIP
       ? `Le clip doit durer au moins ${MIN_CLIP} secondes.`
       : duration > MAX_CLIP
-        ? `Le clip ne peut pas dépasser ${MAX_CLIP / 60} minutes.`
+        ? `The clip cannot exceed ${MAX_CLIP / 60} minutes.`
         : null
 
   const durationTone =
@@ -357,10 +357,10 @@ export default function Editor() {
         crop_rotation: cropRotation,
       })
       setExportClipId(clip.id)
-      notify('Génération lancée. Tu peux suivre la progression ici.')
+      notify('Rendering started. You can follow progress here.')
     } catch (error) {
       setExporting(false)
-      notifyError(error, 'Impossible de lancer la génération.')
+      notifyError(error, 'Unable to start rendering.')
     }
   }
 
@@ -376,7 +376,7 @@ export default function Editor() {
     }
     try {
       await Promise.all((['vertical_hd', 'square', 'landscape_hd'] as const).map((export_format) => api.clips.create(project.id, { ...base, export_format })))
-      notify('Pack complet lancé : vertical HD, carré et paysage HD sont dans la file.')
+      notify('Full pack started: vertical HD, square, and landscape HD are queued.')
       navigate(`/app/projets/${project.id}`)
     } catch (error) {
       notifyError(error, 'Impossible de lancer le pack complet.')
@@ -393,15 +393,15 @@ export default function Editor() {
         if (clip.status === 'completed') {
           window.clearInterval(timer)
           setExporting(false)
-          notify('Ton Short est prêt !')
+          notify('Your clip is ready!')
           navigate(`/app/projets/${clip.project_id}`)
         } else if (clip.status === 'failed' || clip.status === 'cancelled') {
           window.clearInterval(timer)
           setExporting(false)
           setExportClipId(null)
           notifyError(
-            new Error(clip.error_message ?? 'La génération a été interrompue.'),
-            'La génération a échoué.',
+            new Error(clip.error_message ?? 'Rendering was interrupted.'),
+            'Rendering failed.',
           )
         }
       } catch {
@@ -415,7 +415,7 @@ export default function Editor() {
     if (!exportClipId) return
     try {
       await api.clips.cancel(exportClipId)
-      notify('Annulation demandée.')
+      notify('Cancellation requested.')
     } catch (error) {
       notifyError(error, 'Annulation impossible.')
     }
@@ -435,7 +435,7 @@ export default function Editor() {
       setTemplates((current) => [...current, template])
       setSaveTemplateOpen(false)
       setTemplateName('')
-      notify('Modèle de sous-titres enregistré.')
+      notify('Caption template saved.')
     } catch (error) {
       notifyError(error, 'Enregistrement impossible.')
     }
@@ -453,7 +453,7 @@ export default function Editor() {
 
   if (loadError || !project) {
     return (
-      <Alert tone="error" title="Éditeur indisponible">
+      <Alert tone="error" title="Editor unavailable">
         {loadError ?? 'Projet introuvable.'}
         <div className="mt-3">
           <Link to="/app/projets">
@@ -468,13 +468,13 @@ export default function Editor() {
 
   if (!project.video_url) {
     return (
-      <Alert tone="warning" title="Vidéo source indisponible">
-        Le fichier source de ce projet a été supprimé automatiquement après 24
-        heures. Réimporte la vidéo pour créer un nouveau Short.
+      <Alert tone="warning" title="Source video unavailable">
+        This project's source file was automatically deleted after 24 hours.
+        Upload the video again to create a new clip.
         <div className="mt-3">
           <Link to="/app/nouveau">
             <Button variant="secondary" size="sm" icon="upload">
-              Importer une vidéo
+              Upload a video
             </Button>
           </Link>
         </div>
@@ -497,7 +497,7 @@ export default function Editor() {
             {project.name}
           </Link>
           <h1 className="mt-1 text-xl font-bold tracking-tight text-chalk sm:text-2xl">
-            Éditeur de clip
+            Clip editor
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -510,9 +510,9 @@ export default function Editor() {
 
       {/* Editor is desktop-first: say so rather than degrading silently. */}
       <div className="xl:hidden">
-        <Alert tone="info" title="Éditeur pensé pour le desktop">
-          Tu peux ajuster les réglages ici, mais la timeline et la transcription
-          synchronisée sont bien plus confortables sur un grand écran.
+        <Alert tone="info" title="Editor designed for desktop">
+          You can adjust settings here, but the timeline and synced transcript
+          are more comfortable on a larger screen.
         </Alert>
       </div>
 
@@ -572,7 +572,7 @@ export default function Editor() {
                     onPointerCancel={endCropDrag}
                     className="absolute left-1/2 top-1/2 cursor-grab touch-none overflow-hidden border-2 border-blue-400 shadow-[0_0_0_999px_rgba(4,8,15,.10)] active:cursor-grabbing"
                     style={{ width: '72%', aspectRatio: selectedFormat.aspect, transform: `translate(-50%, -50%) rotate(${cropRotation}deg)` }}
-                    role="slider" tabIndex={0} aria-label="Déplacer le cadrage"
+                    role="slider" tabIndex={0} aria-label="Move framing"
                     aria-valuetext={`Cadrage horizontal ${Math.round(cropX * 100)}%, vertical ${Math.round(cropY * 100)}%`}
                     onKeyDown={(event) => {
                       const step = event.shiftKey ? 0.1 : 0.03
@@ -590,7 +590,7 @@ export default function Editor() {
                     className="pointer-events-none h-full w-full object-cover"
                     style={{ objectPosition: `${50 + cropX * 50}% ${50 + cropY * 50}%`, transform: `scale(${cropZoom})` }}
                     onLoadedMetadata={() => seek(start)}
-                    aria-label="Aperçu vertical du clip"
+                    aria-label="Vertical clip preview"
                   />
                   <SubtitleOverlay
                     text={activeCue?.text ?? null}
@@ -616,10 +616,10 @@ export default function Editor() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl border border-ink-500 bg-ink-900/55 p-3 text-xs text-muted">
-                  <label className="min-w-0"><span className="flex items-center justify-between"><span>Zoom</span><output className="font-semibold tabular-nums text-chalk">{Math.round(cropZoom * 100)} %</output></span><input aria-label="Zoom vidéo" type="range" min="1" max="2.5" step="0.01" value={cropZoom} onChange={(event) => setCropZoom(Number(event.target.value))} className="mt-2 w-full" /></label>
+                  <label className="min-w-0"><span className="flex items-center justify-between"><span>Zoom</span><output className="font-semibold tabular-nums text-chalk">{Math.round(cropZoom * 100)} %</output></span><input aria-label="Video zoom" type="range" min="1" max="2.5" step="0.01" value={cropZoom} onChange={(event) => setCropZoom(Number(event.target.value))} className="mt-2 w-full" /></label>
                   <label className="min-w-0"><span className="flex items-center justify-between"><span>Rotation</span><output className="font-semibold tabular-nums text-chalk">{cropRotation}°</output></span><input aria-label="Rotation vidéo" type="range" min="-20" max="20" step="1" value={cropRotation} onChange={(event) => setCropRotation(Number(event.target.value))} className="mt-2 w-full" /></label>
                 </div>
-                <p className="mt-2 text-center text-2xs text-muted">Molette : zoomer ou dézoomer · Glisser le cadre : déplacer · Poignées : zoomer</p>
+                <p className="mt-2 text-center text-2xs text-muted">Wheel: zoom in or out · Drag frame: move · Handles: zoom</p>
 
                 <div className="mt-3 flex items-center justify-center gap-2">
                   <IconButton
@@ -658,7 +658,7 @@ export default function Editor() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted">
-                  Durée idéale pour un Short : 20 à 60 secondes.
+                  Ideal clip length: 20 to 60 seconds.
                 </p>
 
                 {/* Timeline */}
@@ -682,8 +682,8 @@ export default function Editor() {
                     {/* Selection */}
                     <button
                       type="button"
-                      aria-label="Déplacer la sélection bleue"
-                      title="Glisser pour déplacer l’extrait"
+                      aria-label="Move blue selection"
+                      title="Drag to move clip selection"
                       onPointerDown={(event) => { timelineDragRef.current = 'selection'; event.currentTarget.setPointerCapture(event.pointerId) }}
                       onPointerMove={moveTimeline}
                       onPointerUp={() => { timelineDragRef.current = null }}
@@ -694,7 +694,7 @@ export default function Editor() {
                       }}
                     ><span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-blue-500 px-1.5 py-0.5 text-2xs font-semibold text-white">Extrait</span></button>
                     {/* Playhead */}
-                    <button type="button" aria-label="Déplacer le curseur orange" title="Glisser la tête de lecture"
+                    <button type="button" aria-label="Move orange playhead" title="Drag playhead"
                       onPointerDown={(event) => { timelineDragRef.current = 'playhead'; event.currentTarget.setPointerCapture(event.pointerId) }}
                       onPointerMove={moveTimeline} onPointerUp={() => { timelineDragRef.current = null }}
                       className="absolute inset-y-0 z-20 w-3 -translate-x-1/2 cursor-ew-resize"
@@ -702,7 +702,7 @@ export default function Editor() {
                     ><span aria-hidden="true" className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-flame-500 shadow-[0_0_8px_rgba(255,138,61,.9)]" /></button>
                     <button
                       className="absolute inset-0 z-[1] cursor-pointer"
-                      aria-label="Déplacer la lecture dans la timeline"
+                      aria-label="Move playback on timeline"
                       onClick={(event) => {
                         const rect = event.currentTarget.getBoundingClientRect()
                         const ratio = (event.clientX - rect.left) / rect.width
@@ -720,7 +720,7 @@ export default function Editor() {
                 <div className="mt-5 space-y-4">
                   {(
                     [
-                      ['Début', start, clampStart, 'start'],
+                      ['Start', start, clampStart, 'start'],
                       ['Fin', end, clampEnd, 'end'],
                     ] as const
                   ).map(([label, value, setter, edge]) => (
@@ -780,9 +780,9 @@ export default function Editor() {
           {/* --- Synced transcript --- */}
           <section className="panel">
             <div className="flex items-center justify-between border-b border-ink-500 px-5 py-3.5">
-              <h2 className="text-sm font-semibold text-chalk">Transcription synchronisée</h2>
+              <h2 className="text-sm font-semibold text-chalk">Synced transcript</h2>
               <span className="text-xs text-muted">
-                Clic sur une phrase pour déplacer la lecture
+                Click a sentence to move playback
               </span>
             </div>
             <div className="max-h-72 overflow-y-auto p-2">
@@ -819,9 +819,9 @@ export default function Editor() {
                             <button
                               onClick={() => clampStart(segment.start)}
                               className="rounded border border-ink-500 px-1.5 py-0.5 text-2xs text-muted hover:border-blue-500 hover:text-blue-400"
-                              title="Démarrer le clip ici"
+                              title="Start clip here"
                             >
-                              Début
+                              Start
                             </button>
                             <button
                               onClick={() => clampEnd(segment.end)}
@@ -872,7 +872,7 @@ export default function Editor() {
           <section className="panel space-y-5 p-5">
             <div>
               <h2 className="text-sm font-semibold text-chalk">Format d’export</h2>
-              <p className="mt-1 text-xs text-muted">Le cadrage et la résolution de l’export suivent ce choix.</p>
+              <p className="mt-1 text-xs text-muted">Framing and export resolution follow this choice.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {(Object.entries(EXPORT_FORMATS) as [ExportFormat, (typeof EXPORT_FORMATS)[ExportFormat]][]).map(([value, format]) => {
                   const active = exportFormat === value
@@ -904,7 +904,7 @@ export default function Editor() {
 
             {templates.length > 0 && (
               <div>
-                <p className="label">Modèles enregistrés</p>
+                <p className="label">Saved templates</p>
                 <div className="flex flex-wrap gap-1.5">
                   {templates.map((template) => (
                     <button
@@ -913,7 +913,7 @@ export default function Editor() {
                         setSubtitleStyle(template.style)
                         setSubtitleSize(template.size)
                         setSubtitlePosition(template.position)
-                        notify(`Modèle « ${template.name} » applique.`)
+                        notify(`Template “${template.name}” applied.`)
                       }}
                       className="inline-flex items-center gap-1 rounded-md border border-ink-500 bg-ink-800 px-2 py-1 text-2xs text-muted transition-colors hover:border-blue-500 hover:text-blue-400"
                     >

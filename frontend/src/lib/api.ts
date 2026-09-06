@@ -19,7 +19,7 @@ export class ApiError extends Error {
 }
 
 const GENERIC_ERROR =
-  'Le serveur est injoignable. Vérifie que le back-end Fastclip est bien lance.'
+  'The server cannot be reached. Check that the Fastclip backend is running.'
 
 async function parseError(response: Response): Promise<ApiError> {
   let message = `Erreur ${response.status}.`
@@ -397,7 +397,7 @@ export const api = {
           }
         }
         xhr.onerror = () => reject(new ApiError(0, GENERIC_ERROR))
-        xhr.onabort = () => reject(new ApiError(0, 'Import annulé.'))
+        xhr.onabort = () => reject(new ApiError(0, 'Upload cancelled.'))
         signal?.addEventListener('abort', () => xhr.abort())
         xhr.send(form)
       }),

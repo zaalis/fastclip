@@ -63,6 +63,7 @@ export default function SlicedWaves({
     let height = 0
     let frame = 0
     let start = performance.now()
+    let previousFrame = start
 
     const resize = () => {
       const box = canvas.getBoundingClientRect()
@@ -89,8 +90,12 @@ export default function SlicedWaves({
 
     const draw = (now: number) => {
       context.clearRect(0, 0, width, height)
-      pointer.x += (pointer.tx - pointer.x) * 0.055
-      pointer.y += (pointer.ty - pointer.y) * 0.055
+      // Time-based easing keeps the cursor influence calm on all displays.
+      const elapsed = Math.min(50, Math.max(0, now - previousFrame))
+      previousFrame = now
+      const easing = 1 - Math.exp((-elapsed / 1000) * 1.15)
+      pointer.x += (pointer.tx - pointer.x) * easing
+      pointer.y += (pointer.ty - pointer.y) * easing
 
       const time = reducedMotion.matches ? 0.8 : ((now - start) / 1000) * speed
       const columnWidth = width / Math.max(1, columns)

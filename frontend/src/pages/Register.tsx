@@ -14,15 +14,15 @@ interface Errors {
 }
 
 function strengthOf(password: string): { score: 0 | 1 | 2 | 3; label: string } {
-  if (password.length < 8) return { score: 0, label: 'Trop court' }
+  if (password.length < 8) return { score: 0, label: 'Too short' }
   const variety =
     Number(/[a-z]/.test(password)) +
     Number(/[A-Z]/.test(password)) +
     Number(/\d/.test(password)) +
     Number(/[^\w\s]/.test(password))
-  if (variety <= 1) return { score: 1, label: 'Faible' }
-  if (variety === 2 || password.length < 12) return { score: 2, label: 'Correct' }
-  return { score: 3, label: 'Solide' }
+  if (variety <= 1) return { score: 1, label: 'Weak' }
+  if (variety === 2 || password.length < 12) return { score: 2, label: 'Fair' }
+  return { score: 3, label: 'Strong' }
 }
 
 export default function Register() {
@@ -49,16 +49,16 @@ export default function Register() {
 
   const validate = (): Errors => {
     const next: Errors = {}
-    if (username.trim().length < 2) next.username = 'Le pseudo doit faire au moins 2 caractères.'
-    else if (username.trim().length > 40) next.username = 'Le pseudo est trop long (40 max).'
+    if (username.trim().length < 2) next.username = 'Your username must be at least 2 characters.'
+    else if (username.trim().length > 40) next.username = 'Your username is too long (40 max).'
 
-    if (!email.trim()) next.email = 'Entre ton adresse email.'
+    if (!email.trim()) next.email = 'Enter your email address.'
     else if (!/^[^@\s]+@[^@\s.]+\.[^@\s]{2,}$/.test(email.trim()))
-      next.email = 'Cette adresse email ne semble pas valide.'
+      next.email = 'This email address does not look valid.'
 
-    if (password.length < 8) next.password = 'Au moins 8 caractères.'
+    if (password.length < 8) next.password = 'Use at least 8 characters.'
     else if (/^\d+$/.test(password) || /^[a-zA-Z]+$/.test(password))
-      next.password = 'Mélange lettres et chiffres pour un mot de passe plus solide.'
+      next.password = 'Mix letters and numbers for a stronger password.'
 
     setErrors(next)
     return next
@@ -78,11 +78,11 @@ export default function Register() {
     setSubmitting(true)
     try {
       await register(email.trim(), username.trim(), password, remember)
-      notify(`Bienvenue sur Fastclip, ${username.trim()} !`)
+      notify(`Welcome to Fastclip, ${username.trim()}!`)
       navigate('/app', { replace: true })
     } catch (error) {
       const message =
-        error instanceof ApiError ? error.message : 'Inscription impossible pour le moment.'
+        error instanceof ApiError ? error.message : 'Unable to create your account right now.'
       if (error instanceof ApiError && error.status === 409) {
         setErrors((prev) => ({ ...prev, email: message }))
         refs.email.current?.focus()
@@ -100,13 +100,13 @@ export default function Register() {
 
   return (
     <AuthLayout
-      title="Créer un compte"
-      subtitle="Gratuit, sans carte bancaire. Ton premier clip en quelques minutes."
+      title="Create your account"
+      subtitle="Free, no credit card required. Your first clip in minutes."
       footer={
         <p>
-          Déjà inscrit ?{' '}
+          Already have an account?{' '}
           <Link to="/connexion" className="link font-medium">
-            Se connecter
+            Sign in
           </Link>
         </p>
       }
@@ -114,7 +114,7 @@ export default function Register() {
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {formError && (
           <div role="alert">
-            <Alert tone="error" title="Inscription refusée">
+            <Alert tone="error" title="Sign-up denied">
               {formError}
             </Alert>
           </div>
@@ -122,15 +122,15 @@ export default function Register() {
 
         <Field
           ref={refs.username}
-          label="Pseudo"
+          label="Username"
           autoComplete="nickname"
-          placeholder="Ton nom de créateur"
+          placeholder="Your creator name"
           icon="user"
           required
           maxLength={40}
           value={username}
           error={errors.username}
-          hint="Visible sur ton tableau de bord. Modifiable à tout moment."
+          hint="Shown on your dashboard. You can change it at any time."
           onChange={(event) => {
             setUsername(event.target.value)
             if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }))
@@ -139,11 +139,11 @@ export default function Register() {
 
         <Field
           ref={refs.email}
-          label="Adresse email"
+          label="Email address"
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder="toi@exemple.com"
+          placeholder="you@example.com"
           icon="mail"
           required
           value={email}
@@ -157,10 +157,10 @@ export default function Register() {
         <div>
           <Field
             ref={refs.password}
-            label="Mot de passe"
+            label="Password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
-            placeholder="8 caractères minimum"
+            placeholder="At least 8 characters"
             icon="lock"
             required
             value={password}
@@ -174,7 +174,7 @@ export default function Register() {
                 type="button"
                 size="sm"
                 icon={showPassword ? 'eye-off' : 'eye'}
-                label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                label={showPassword ? 'Hide password' : 'Show password'}
                 onClick={() => setShowPassword((value) => !value)}
               />
             }
@@ -192,7 +192,7 @@ export default function Register() {
                 ))}
               </div>
               <span className="text-xs text-muted">
-                Robustesse : <span className="text-chalk">{strength.label}</span>
+                Strength: <span className="text-chalk">{strength.label}</span>
               </span>
             </div>
           )}
@@ -206,16 +206,16 @@ export default function Register() {
             className="h-4 w-4 cursor-pointer rounded border-ink-400 bg-ink-900 text-blue-600
               focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0"
           />
-          Se souvenir de moi
+          Remember me
         </label>
 
         <Button type="submit" size="lg" block loading={submitting}>
-          {submitting ? 'Création du compte...' : 'Créer mon compte'}
+          {submitting ? 'Creating your account...' : 'Create my account'}
         </Button>
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
           <Icon name="shield" size={14} className="mt-0.5 shrink-0 text-positive-500" />
-          Tes vidéos sont supprimées automatiquement 24 heures après l’import.
+          Your videos are automatically deleted 24 hours after upload.
         </p>
       </form>
     </AuthLayout>
