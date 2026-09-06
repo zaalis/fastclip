@@ -1,403 +1,246 @@
 # Fastclip
 
-**Transforme une vidéo longue en Shorts verticaux sous-titrés, en quelques minutes.**
+**Turn long videos into captioned vertical clips in minutes.**
 
-Fastclip importe une vidéo, en extrait l'audio, la transcrit avec horodatages,
-fait analyser la transcription par une IA, propose **exactement trois extraits**
-à fort potentiel, puis laisse le créateur ajuster les limites et exporter un MP4
-vertical 720 × 1280 avec sous-titres incrustés et un fichier `.srt`.
+Fastclip imports a video, extracts its audio, creates a timestamped transcript, analyses that transcript with AI, proposes exactly three high-potential clips, and lets the creator refine each selection before exporting a vertical MP4 with burned-in captions and an `.srt` file.
 
-L'IA propose, explique et accélère. **La décision finale reste humaine.**
+AI suggests, explains, and speeds up the workflow. **The final decision always stays with the creator.**
 
----
+## Contents
 
-## Sommaire
-
-- [Aperçu du flux](#aperçu-du-flux)
-- [Prérequis](#prérequis)
+- [Workflow](#workflow)
+- [Requirements](#requirements)
 - [Installation](#installation)
-- [Variables d'environnement](#variables-denvironnement)
-- [Lancement local](#lancement-local)
-- [Structure du projet](#structure-du-projet)
-- [Contraintes et choix d'architecture](#contraintes-et-choix-darchitecture)
-- [Sécurité](#sécurité)
-- [Limites connues](#limites-connues)
-- [Déploiement sur une VM Google Cloud E2](#déploiement-sur-une-vm-google-cloud-e2)
+- [Environment variables](#environment-variables)
+- [Local development](#local-development)
+- [Architecture decisions](#architecture-decisions)
+- [Security](#security)
+- [Known limitations](#known-limitations)
+- [Google Cloud VM deployment](#google-cloud-vm-deployment)
 
----
-
-## Aperçu du flux
+## Workflow
 
 ```
-Import  ─▶  Extraction audio  ─▶  Transcription  ─▶  Analyse IA  ─▶  Éditeur  ─▶  Export
-(MP4/MOV     (mono 16 kHz,        (faster-whisper,   (Mistral,       (limites,   (FFmpeg :
- /WebM,       FFmpeg)              int8, CPU,         JSON strict,    styles,     découpe,
- ≤ 10 min,                         timestamps         3 extraits      légende)    9:16, sous-
- ≤ 250 Mo)                         mot à mot)         vérifiés)                   titres, H.264)
+Upload → Audio extraction → Transcription → AI analysis → Editor → Export
+(MP4/MOV/WebM)  (FFmpeg)        (faster-whisper)  (Mistral)  (captions)  (H.264 MP4 + SRT)
 ```
 
-Statuts d'un projet : `Brouillon` · `Téléversement` · `En attente` · `Transcription`
-· `Analyse IA` · `Génération du Short` · `Terminé` · `Échec` · `Annulé`.
+Projects progress through `Draft`, `Uploading`, `Queued`, `Transcribing`, `Analysing`, `Rendering`, `Completed`, `Failed`, or `Cancelled`.
 
----
+## Requirements
 
-## Prérequis
+| Component | Version | Purpose |
+|---|---:|---|
+| Python | 3.11 – 3.13 | FastAPI backend |
+| Node.js | 18+ | Vite frontend build |
+| FFmpeg | 4.2+ with `libx264`, `aac`, and `libass` | Media processing and captions |
 
-| Composant | Version | Note |
-|---|---|---|
-| Python | 3.11 – 3.13 | back-end FastAPI |
-| Node.js | 18+ | front-end Vite |
-| FFmpeg | 4.2+ avec `libx264`, `aac`, `libass` | **voir ci-dessous** |
-
-### FFmpeg
-
-Fastclip cherche FFmpeg dans cet ordre :
-
-1. le chemin donné par `FFMPEG_PATH` ;
-2. un `ffmpeg` présent dans le `PATH` ;
-3. **le binaire statique fourni par le paquet Python `imageio-ffmpeg`**, installé
-   automatiquement avec les dépendances.
-
-Autrement dit, l'application fonctionne sans installation système de FFmpeg.
-En production, un FFmpeg système récent reste préférable :
+Fastclip finds FFmpeg from `FFMPEG_PATH`, then the system `PATH`, then the static binary shipped by `imageio-ffmpeg`. A system FFmpeg is recommended in production:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y ffmpeg
+ffmpeg -encoders | grep libx264
+ffmpeg -filters | grep ' ass '
 ```
-
-Le build utilisé doit inclure `libx264` (encodage H.264) et `libass`
-(incrustation des sous-titres). Vérification rapide :
-
-```bash
-ffmpeg -encoders | grep libx264 && ffmpeg -filters | grep " ass "
-```
-
----
 
 ## Installation
 
 ```bash
-git clone <votre-remote> fastclip && cd fastclip
+git clone https://github.com/zaalis/fastclip.git fastclip
+cd fastclip
 ```
 
-### Back-end
+### Backend
 
 ```bash
 cd backend
 python -m venv .venv
 # Linux / macOS
 source .venv/bin/activate
-# Windows
-.venv\Scripts\activate
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
 cp .env.example .env
 ```
 
-### Front-end
+### Frontend
 
 ```bash
 cd frontend
 npm install
 ```
 
----
+## Environment variables
 
-## Variables d'environnement
+Runtime configuration belongs in `backend/.env`, which is never committed. `backend/.env.example` documents every setting without containing a real secret.
 
-Toute la configuration vit dans `backend/.env`, qui **n'est jamais versionné**
-(`.gitignore`). Le fichier `backend/.env.example` liste toutes les clés sans
-aucune valeur secrète.
-
-### À renseigner en priorité
-
-| Variable | Défaut | Rôle |
+| Variable | Default | Purpose |
 |---|---|---|
-| `MISTRAL_MODEL` | `mistral-large-latest` | Modèle d'analyse. |
-| `SECRET_KEY` | *(auto)* | Générer en production : `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Si vide, une clé est générée et conservée dans `backend/data/.secret_key`. |
-| `COOKIE_SECURE` | `false` | **À passer à `true` derrière HTTPS.** |
-| `CORS_ORIGINS` | `http://localhost:5173,…` | Inutile si le front est servi par le même hôte (voir déploiement). |
+| `MISTRAL_MODEL` | `mistral-large-latest` | Mistral model used for analysis. |
+| `SECRET_KEY` | generated automatically | Generate a production key with `python -c "import secrets; print(secrets.token_urlsafe(48))"`. If empty, Fastclip persists one in `backend/data/.secret_key`. |
+| `COOKIE_SECURE` | `false` | Set to `true` only when the site is available through HTTPS. |
+| `WHISPER_MODEL` | `small` | `tiny`, `base`, `small`, `medium`, or `large-v3`. Use `base` on a 4-GB VM. |
+| `WHISPER_DEVICE` | `cpu` | CPU or a supported accelerator. |
+| `WHISPER_COMPUTE_TYPE` | `int8` | Efficient CPU quantization. |
+| `MAX_UPLOAD_MB` | `250` | Per-upload limit. |
+| `RETENTION_HOURS` | `24` | Source and export retention period. |
+| `EXPORT_WIDTH` / `EXPORT_HEIGHT` | `720` / `1280` | Default export dimensions. |
 
-### Transcription
+`FASTCLIP_ALLOW_HEURISTIC_FALLBACK=false` by default. When enabled without a connected Mistral key, Fastclip creates explicitly labeled local heuristic suggestions for development only. It never presents those results as AI output.
 
-| Variable | Défaut | Rôle |
-|---|---|---|
-| `WHISPER_MODEL` | `small` | `tiny`, `base`, `small`, `medium`, `large-v3`. `base` est un bon compromis sur 2 vCPU ; `tiny` pour un premier lancement rapide. |
-| `WHISPER_DEVICE` | `cpu` | |
-| `WHISPER_COMPUTE_TYPE` | `int8` | Quantification CPU. |
-| `WHISPER_CPU_THREADS` | `2` | Aligné sur 2 vCPU. |
-| `WHISPER_LANGUAGE` | *(vide)* | Vide = détection automatique. Forcer `fr` améliore nettement la qualité si le contenu est toujours francophone. |
+## Local development
 
-### Limites, rétention, export
-
-| Variable | Défaut |
-|---|---|
-| `MAX_UPLOAD_MB` | `250` |
-| `MAX_DURATION_SECONDS` | `600` (10 min) |
-| `MAX_STORAGE_PER_USER_MB` | `2048` |
-| `ALLOWED_EXTENSIONS` | `.mp4,.mov,.webm` |
-| `RETENTION_HOURS` | `24` |
-| `CLEANUP_INTERVAL_MINUTES` | `15` |
-| `EXPORT_WIDTH` / `EXPORT_HEIGHT` | `720` / `1280` |
-| `EXPORT_CRF` / `EXPORT_PRESET` | `23` / `veryfast` |
-| `FFMPEG_THREADS` | `2` |
-| `RATE_LIMIT_UPLOADS_PER_HOUR` | `12` |
-| `RATE_LIMIT_ANALYSES_PER_HOUR` | `30` |
-| `RATE_LIMIT_EXPORTS_PER_HOUR` | `40` |
-
-### Mode test interne (non-IA)
-
-`FASTCLIP_ALLOW_HEURISTIC_FALLBACK=false` par défaut.
-
-Quand un compte n'a pas encore connecté sa clé Mistral **et** que cette option vaut `true`, Fastclip
-génère des propositions par une heuristique locale (densité de parole, rythme,
-durée cible, autonomie). **Ce n'est pas de l'IA et ce n'est jamais présenté comme
-telle :** chaque proposition porte `source = "heuristic"` et l'interface affiche
-un badge « Mode test local (non-IA) » à la place du badge « Analyse IA ».
-Réservé au développement et aux tests.
-
-Sans clé et sans ce mode, le projet passe en `Échec` avec un message explicite :
-l'application ne fabrique jamais de faux résultats d'IA.
-
----
-
-## Lancement local
-
-Deux terminaux.
-
-**Terminal 1 — back-end**
+Run the backend and frontend in separate terminals:
 
 ```bash
+# Terminal 1
 cd backend
-.venv/Scripts/activate      # Windows  (source .venv/bin/activate sur Linux/macOS)
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
 
-**Terminal 2 — front-end**
-
-```bash
+# Terminal 2
 cd frontend
 npm run dev
 ```
 
-Ouvre <http://localhost:5173>. Le serveur Vite proxifie `/api` vers le port 8000,
-donc tout est en même origine et le cookie de session fonctionne sans CORS.
+Open <http://localhost:5173>. Vite proxies `/api` to port 8000, keeping development requests same-origin.
 
-### Vérifier l'installation sans passer par l'interface
+### Pipeline verification
 
 ```bash
 cd backend
-python scripts/pipeline_check.py ../samples/mavideo.mp4
+python scripts/pipeline_check.py ../samples/your-video.mp4
 ```
 
-Ce script enchaîne sonde → extraction audio → transcription → sélection des
-extraits → rendu d'un Short, et affiche les temps de chaque étape. Idéal pour
-valider un déploiement.
-
-Un échantillon de test peut être généré sous Windows :
+The script runs probing, audio extraction, transcription, clip selection, and an export, then reports timing for every stage. On Windows, a sample video can be created with:
 
 ```powershell
 backend\scripts\make_sample.ps1
 ```
 
----
-
-## Structure du projet
+## Project structure
 
 ```
 fastclip/
 ├─ backend/
 │  ├─ app/
-│  │  ├─ main.py             # entrée FastAPI, middlewares, service du front en prod
-│  │  ├─ config.py           # toute la configuration, pilotée par .env
-│  │  ├─ database.py         # SQLite + WAL, sessions
-│  │  ├─ models.py           # User, Project, ClipSuggestion, Clip, Job, CaptionTemplate
-│  │  ├─ schemas.py          # modèles de requête + sérialiseurs
-│  │  ├─ security.py         # Argon2id, sessions opaques
-│  │  ├─ deps.py             # dépendances FastAPI (auth, ownership)
-│  │  ├─ responses.py        # streaming de fichiers avec HTTP Range
-│  │  ├─ routers/
-│  │  │  ├─ auth.py          # inscription, connexion, session, reset (stub)
-│  │  │  ├─ account.py       # profil, avatar, mot de passe, données, suppression
-│  │  │  ├─ projects.py      # import, cycle de vie, médias
-│  │  │  ├─ clips.py         # création d'export, suivi, téléchargements
-│  │  │  └─ system.py        # état, file d'attente, dashboard, modèles de sous-titres
-│  │  └─ services/
-│  │     ├─ video.py         # FFmpeg : sonde, audio, miniature, rendu 9:16
-│  │     ├─ transcription.py # faster-whisper (CPU / int8)
-│  │     ├─ ai.py            # Mistral + validation stricte + score expliqué
-│  │     ├─ subtitles.py     # découpage en blocs, ASS (incrustation), SRT
-│  │     ├─ queue.py         # file à un seul créneau + purge 24 h
-│  │     ├─ storage.py       # arborescence, quotas, rétention
-│  │     └─ ratelimit.py     # limite de débit en mémoire
+│  │  ├─ main.py             # FastAPI entry point and production frontend serving
+│  │  ├─ config.py           # Environment-driven configuration
+│  │  ├─ database.py         # SQLite + WAL setup
+│  │  ├─ models.py           # Users, projects, clips, jobs, and templates
+│  │  ├─ security.py         # Argon2id passwords and opaque sessions
+│  │  ├─ routers/            # Auth, account, project, clip, and system endpoints
+│  │  └─ services/           # Video, transcription, AI, captions, queue, and storage
 │  ├─ scripts/
-│  │  ├─ pipeline_check.py   # test de bout en bout hors API
-│  │  └─ make_sample.ps1     # génère une vidéo de test (Windows)
 │  ├─ requirements.txt
 │  └─ .env.example
 ├─ frontend/
-│  └─ src/
-│     ├─ pages/              # Landing, Login, Register, ForgotPassword,
-│     │                      # Dashboard, NewProject, Projects, ProjectDetail,
-│     │                      # Editor, Templates, Help, Settings
-│     ├─ components/         # AppShell, AuthLayout, Icon, ui, ScoreBreakdown,
-│     │                      # SubtitlePreview
-│     ├─ context/AppContext  # session + notifications
-│     └─ lib/                # client API typé, formats, statuts, blocs de sous-titres
-└─ .gitignore
+│  └─ src/                   # React pages, components, context, and API client
+└─ README.md
 ```
 
-### Base de données
+SQLite uses WAL mode at `backend/data/fastclip.db`. Do not delete `backend/data/` in production: it holds user data, project records, encrypted AI keys, and the generated session secret.
 
-SQLite en mode WAL, fichier `backend/data/fastclip.db`. Les tables sont créées au
-démarrage. Pour repartir de zéro en développement : arrête le serveur et supprime
-`backend/data/`.
+## Architecture decisions
 
----
+Fastclip is designed for a small 2-vCPU VM.
 
-## Contraintes et choix d'architecture
-
-Fastclip est dimensionné pour une **`e2-standard-2` (2 vCPU / 8 Go)**.
-
-| Décision | Raison |
+| Decision | Reason |
 |---|---|
-| **Une seule tâche à la fois** | Un encodage FFmpeg et une transcription Whisper en parallèle sur 2 vCPU se ralentissent mutuellement. La file est persistée en base et affichée à l'utilisateur (position, étape, progression réelle). |
-| **10 min / 250 Mo max** | Garde les temps de traitement prévisibles et la file courte. |
-| **Audio mono 16 kHz avant transcription** | Format exact attendu par Whisper : moins de RAM, moins de CPU, aucune perte utile. |
-| **`int8` sur CPU** | Quantification CTranslate2 : mémoire divisée, vitesse multipliée. |
-| **Export 720 × 1280, CRF 23, preset `veryfast`** | Qualité suffisante pour les plateformes courtes, encodage rapide. |
-| **Aucun fichier chargé en mémoire** | L'upload est écrit sur disque par blocs de 1 Mio ; la lecture se fait en streaming avec support des requêtes `Range`. |
-| **Modèle Whisper chargé une seule fois** | Singleton de processus : un seul modèle résident, cohérent avec la file à un créneau. |
-| **Suppression automatique après 24 h** | Un thread de maintenance efface sources et exports. Les projets restent visibles, marqués « fichiers supprimés ». |
-| **Seule la transcription part à l'IA** | Ni la vidéo, ni l'audio ne quittent le serveur. |
+| One processing job at a time | Prevents FFmpeg and Whisper from competing for limited CPU and memory. The persistent queue exposes real position, stage, and progress. |
+| 10-minute / 250-MB uploads | Keeps processing time and queue length predictable. |
+| Mono 16-kHz audio | Matches Whisper input and reduces memory use. |
+| CPU `int8` inference | Keeps transcription practical on a small VM. |
+| 720 × 1280, CRF 23, `veryfast` | Produces platform-ready clips with reasonable encoding time. |
+| Streaming media | Avoids loading complete uploads into memory. |
+| One resident Whisper model | Avoids duplicated model memory. |
+| 24-hour retention | Sources and exports are automatically removed; project records remain visible. |
+| Transcript-only AI requests | Video and audio never leave the Fastclip server. |
 
-### Extension prévue : recadrage intelligent
+The V1 crop is centered and isolated in `build_vertical_filter()` in `backend/app/services/video.py`, so face tracking can be added later without changing the rest of the pipeline.
 
-Le recadrage V1 est centré et **isolé dans une seule fonction**,
-`build_vertical_filter()` dans `backend/app/services/video.py`. Ajouter un suivi
-automatique du visage revient à remplacer l'expression `crop` par une expression
-pilotée par des positions détectées, sans toucher au reste du pipeline.
+## Security
 
----
+- Passwords use **Argon2id**.
+- Sessions use random opaque `HttpOnly`, `SameSite=Lax` cookies; the database stores only token hashes.
+- The server validates extension, streamed size, real duration, audio availability, and per-user storage quota.
+- Every media route verifies project ownership.
+- Each Mistral key is verified, AES-GCM encrypted, and only returned masked.
+- `.gitignore` excludes secrets, local data, videos, exports, databases, and dependencies.
+- Responses include `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` headers.
 
-## Sécurité
+## Known limitations
 
-- **Mots de passe** hachés avec **Argon2id** (64 Mo, 2 passes, parallélisme 2).
-- **Sessions** : jeton aléatoire opaque en cookie **HttpOnly**, `SameSite=Lax`,
-  `Secure` en production. La base ne stocke que son empreinte SHA-256.
-- **Validations serveur** sur chaque import : extension, taille (coupée pendant
-  l'écriture), durée réelle mesurée par FFmpeg, présence d'une piste audio, quota
-  de stockage.
-- **Limites de débit** par utilisateur sur les imports, analyses et exports ;
-  par adresse IP sur l'inscription, la connexion et la réinitialisation.
-- **Cloisonnement** : chaque route média vérifie que le projet appartient bien à
-  l'utilisateur connecté.
-- **Clé Mistral par compte.** Elle est vérifiée avant enregistrement, chiffrée
-  avec AES-GCM et liée à l'identifiant du compte. L'API ne renvoie qu'une version
-  masquée et la clé n'est jamais placée dans un fichier de configuration.
-- **`.gitignore`** exclut `.env`, `backend/data/`, les vidéos, les exports, la
-  base locale et les `node_modules`.
-- En-têtes `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
+- Password reset email delivery is not implemented yet.
+- V1 uses a centered crop; face tracking is not included yet.
+- In-memory rate limiting is for a single process; use Redis when scaling horizontally.
+- One worker means a long transcription delays queued exports.
+- Install `fonts-dejavu-core` on minimal Linux hosts for subtitle fonts.
 
----
+## Google Cloud VM deployment
 
-## Limites connues
+Fastclip runs in production as one FastAPI process behind Nginx. When `frontend/dist` exists, FastAPI serves it directly, so requests and session cookies remain same-origin.
 
-- **Réinitialisation de mot de passe** : pas d'infrastructure d'envoi d'email.
-  La page existe et le dit explicitement ; c'est la prochaine évolution.
-- **Détection de langue** : sur des voix de synthèse ou un audio bruité, les
-  petits modèles Whisper peuvent se tromper de langue. Renseigner
-  `WHISPER_LANGUAGE=fr` supprime le problème quand le contenu est connu.
-- **Recadrage centré uniquement** : pas encore de suivi de visage (voir plus haut).
-- **Limite de débit en mémoire** : suffisante pour un processus unique ; à
-  déplacer vers Redis si Fastclip tourne sur plusieurs workers.
-- **Sous-titres** : la police d'incrustation est Arial (présente sur Windows et
-  sur la plupart des images Linux via `ttf-mscorefonts` ou une substitution
-  fontconfig). Sur une image minimale, installer une police :
-  `sudo apt-get install -y fonts-dejavu-core`.
-- **Un seul worker** : c'est un choix, mais cela signifie qu'une transcription
-  longue retarde les exports en attente. La file l'indique clairement.
-
----
-
-## Déploiement sur une VM Google Cloud E2
-
-Cible : `e2-standard-2` (2 vCPU, 8 Go), Debian 12, disque 30 Go.
-
-### 1. Machine et dépendances
+### 1. Install dependencies
 
 ```bash
-gcloud compute instances create fastclip \
-  --machine-type=e2-standard-2 \
-  --image-family=debian-12 --image-project=debian-cloud \
-  --boot-disk-size=30GB --tags=http-server,https-server
-
-gcloud compute ssh fastclip
 sudo apt-get update
-sudo apt-get install -y python3-venv python3-pip ffmpeg nginx git fonts-dejavu-core
+sudo apt-get install -y python3-venv python3-pip ffmpeg nginx git nodejs npm fonts-dejavu-core
 ```
 
-### 2. Application
+### 2. Install Fastclip
 
 ```bash
 sudo adduser --system --group --home /opt/fastclip fastclip
-sudo -u fastclip git clone <votre-remote> /opt/fastclip/app
+sudo -u fastclip git clone https://github.com/zaalis/fastclip.git /opt/fastclip/app
+
 cd /opt/fastclip/app/backend
 sudo -u fastclip python3 -m venv .venv
 sudo -u fastclip .venv/bin/pip install -r requirements.txt
-sudo -u fastclip cp .env.example .env
-sudo -u fastclip nano .env      # SECRET_KEY, COOKIE_SECURE=true
-```
 
-### 3. Front-end servi par le même processus
-
-```bash
 cd /opt/fastclip/app/frontend
-npm ci && npm run build
+sudo -u fastclip npm install
+sudo -u fastclip npm run build
 ```
 
-Quand `frontend/dist/` existe, le back-end le sert automatiquement : une seule
-origine, pas de CORS, cookie `SameSite=Lax` sans réglage particulier.
+Create `/opt/fastclip/app/backend/.env` with `ENVIRONMENT=production`. Use `WHISPER_MODEL=base` on a 4-GB VM. Set `COOKIE_SECURE=true` only after HTTPS is configured.
 
-### 4. Service systemd
+### 3. Create the service
+
+Create `/etc/systemd/system/fastclip.service`:
 
 ```ini
-# /etc/systemd/system/fastclip.service
 [Unit]
-Description=Fastclip
-After=network.target
+Description=Fastclip video clip generator
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=fastclip
 Group=fastclip
 WorkingDirectory=/opt/fastclip/app/backend
-ExecStart=/opt/fastclip/app/backend/.venv/bin/uvicorn app.main:app \
-          --host 127.0.0.1 --port 8000 --workers 1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/fastclip/app/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
 Restart=always
 RestartSec=5
-# Un seul worker : la file à un créneau vit dans le processus.
-Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl daemon-reload && sudo systemctl enable --now fastclip
+sudo systemctl daemon-reload
+sudo systemctl enable --now fastclip
 ```
 
-> **Important :** garder `--workers 1`. Plusieurs workers signifieraient plusieurs
-> files et plusieurs modèles Whisper résidents — exactement ce que la machine ne
-> peut pas absorber.
+Keep `--workers 1`: additional workers create additional queues and Whisper models in memory.
 
-### 5. Nginx
+### 4. Configure Nginx
 
 ```nginx
 server {
     listen 80;
     server_name fastclip.example.com;
-
-    # Doit dépasser MAX_UPLOAD_MB.
     client_max_body_size 300M;
     client_body_timeout 300s;
 
@@ -407,32 +250,22 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 600s;
-        proxy_request_buffering off;   # streaming des uploads
+        proxy_request_buffering off;
     }
 }
 ```
 
 ```bash
-sudo certbot --nginx -d fastclip.example.com   # puis COOKIE_SECURE=true
-sudo systemctl restart fastclip
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-### 6. Mémoire
+### 5. Enable HTTPS and back up data
 
-Ajouter 2 Go de swap évite qu'un pic pendant le chargement d'un modèle
-`medium` ne fasse tomber le service :
+After a domain points to the VM:
 
 ```bash
-sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
-sudo mkswap /swapfile && sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo certbot --nginx -d fastclip.example.com
 ```
 
-### 7. Sauvegarde
-
-Seul `backend/data/fastclip.db` mérite une sauvegarde : les médias sont
-volontairement éphémères (24 h).
-
-```bash
-sqlite3 /opt/fastclip/app/backend/data/fastclip.db ".backup '/var/backups/fastclip-$(date +%F).db'"
-```
+Set `COOKIE_SECURE=true` in `backend/.env`, then restart Fastclip. Back up `backend/data/fastclip.db`; uploaded media and generated exports are deliberately temporary.
