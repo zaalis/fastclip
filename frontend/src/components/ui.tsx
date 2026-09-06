@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type TextareaHTMLAttributes,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 
 import { Icon, type IconName } from './Icon'
@@ -543,8 +544,8 @@ export function Modal({
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6">
       <div
         className="absolute inset-0 animate-fade-in bg-ink-900/80 backdrop-blur-[2px]"
         onClick={onClose}
@@ -555,9 +556,9 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`panel relative w-full animate-fade-up shadow-lifted ${width}`}
+        className={`panel relative flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden animate-fade-up shadow-lifted sm:max-h-[calc(100dvh-3rem)] ${width}`}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-ink-500 p-5">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ink-500 p-5">
           <div>
             <h2 id={titleId} className="text-base font-semibold text-chalk">
               {title}
@@ -568,14 +569,15 @@ export function Modal({
           </div>
           <IconButton icon="close" label="Fermer" size="sm" onClick={onClose} />
         </div>
-        {children && <div className="p-5">{children}</div>}
+        {children && <div className="min-h-0 overflow-y-auto p-5">{children}</div>}
         {footer && (
-          <div className="flex flex-wrap justify-end gap-2 border-t border-ink-500 p-4">
+          <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-ink-500 p-4">
             {footer}
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

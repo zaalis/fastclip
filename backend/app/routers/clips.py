@@ -56,7 +56,7 @@ def create_clip(
             status_code=409,
             detail="La transcription n'est pas encore prête pour ce projet.",
         )
-    if project.status in ("queued", "transcribing", "analyzing", "rendering"):
+    if project.status in ("transcribing", "analyzing"):
         raise HTTPException(
             status_code=409,
             detail="Une tâche est déjà en cours sur ce projet. Attends la fin ou "

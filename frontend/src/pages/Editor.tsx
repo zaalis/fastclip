@@ -110,6 +110,8 @@ export default function Editor() {
 
   // --- Export ---
   const [exporting, setExporting] = useState(false)
+  const [packExporting, setPackExporting] = useState(false)
+  const [packInfoOpen, setPackInfoOpen] = useState(false)
   const [exportClipId, setExportClipId] = useState<string | null>(null)
   const [exportProgress, setExportProgress] = useState(0)
   const [exportStage, setExportStage] = useState('En attente dans la file')
@@ -360,6 +362,25 @@ export default function Editor() {
       setExporting(false)
       notifyError(error, 'Impossible de lancer la génération.')
     }
+  }
+
+  const generatePack = async () => {
+    if (!project || durationError) return
+    setPackExporting(true)
+    const base = {
+      suggestion_id: activeSuggestion?.id ?? null, start_seconds: Number(start.toFixed(2)), end_seconds: Number(end.toFixed(2)),
+      title: title.trim() || project.name, caption: caption.trim(), hashtags: hashtags.split(/[\s,]+/).map((tag) => tag.trim()).filter(Boolean),
+      subtitle_style: subtitleStyle, subtitle_size: subtitleSize, subtitle_position: subtitlePosition, subtitle_accent: accent,
+      subtitles_enabled: subtitlesEnabled, subtitle_font: subtitleFont, subtitle_effect: subtitleEffect, playback_speed: Number(playbackSpeed),
+      crop_x: cropX, crop_y: cropY, crop_zoom: cropZoom, crop_rotation: cropRotation,
+    }
+    try {
+      await Promise.all((['vertical_hd', 'square', 'landscape_hd'] as const).map((export_format) => api.clips.create(project.id, { ...base, export_format })))
+      notify('Pack complet lancé : vertical HD, carré et paysage HD sont dans la file.')
+      navigate(`/app/projets/${project.id}`)
+    } catch (error) {
+      notifyError(error, 'Impossible de lancer le pack complet.')
+    } finally { setPackExporting(false) }
   }
 
   useEffect(() => {
@@ -1040,6 +1061,12 @@ export default function Editor() {
                 >
                   Générer mon Short
                 </Button>
+                <div className="mt-2 flex items-center gap-2">
+                  <Button variant="secondary" size="md" icon="layers" block loading={packExporting} disabled={Boolean(durationError)} onClick={generatePack}>
+                    Pack complet
+                  </Button>
+                  <IconButton icon="info" label="À propos du pack complet" variant="secondary" onClick={() => setPackInfoOpen(true)} />
+                </div>
                 <ul className="mt-4 space-y-1.5 text-xs text-muted">
                   {[
                     `MP4 ${selectedFormat.ratio} · ${selectedFormat.dimensions}, H.264`,
@@ -1059,6 +1086,23 @@ export default function Editor() {
           </section>
         </aside>
       </div>
+
+      <Modal
+        open={packInfoOpen}
+        onClose={() => setPackInfoOpen(false)}
+        title="Pack complet"
+        description="Un même montage, prêt pour les principaux placements sociaux."
+        footer={<Button onClick={() => setPackInfoOpen(false)}>Compris</Button>}
+      >
+        <div className="space-y-3">
+          {[
+            ['Vertical HD', '1080 × 1920 · Reels, TikTok, Shorts'],
+            ['Carré', '1080 × 1080 · Feed Instagram et LinkedIn'],
+            ['Paysage HD', '1920 × 1080 · YouTube et X'],
+          ].map(([name, detail]) => <div key={name} className="flex items-center gap-3 rounded-xl border border-ink-500 bg-ink-900/60 p-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-500/10 text-blue-400"><Icon name="film" size={17} /></span><p><span className="block text-sm font-semibold text-chalk">{name}</span><span className="text-xs text-muted">{detail}</span></p></div>)}
+          <p className="text-xs leading-relaxed text-muted">Les trois exports reprennent ton découpage, ton cadrage et tes sous-titres actuels. Ils sont ajoutés l’un après l’autre à la file.</p>
+        </div>
+      </Modal>
 
       <Modal
         open={customizeOpen}
