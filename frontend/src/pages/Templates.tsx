@@ -20,7 +20,7 @@ import {
 } from '../lib/status'
 
 const ACCENT = '#FF8A3D'
-const SAMPLE = 'Le détail qui change tout'
+const SAMPLE = 'The detail that changes everything'
 
 /** Extra #2 - reusable subtitle presets so a look survives across clips. */
 export default function Templates() {
@@ -41,7 +41,7 @@ export default function Templates() {
       const { templates: next } = await api.templates.list()
       setTemplates(next)
     } catch (error) {
-      notifyError(error, 'Impossible de charger les modèles.')
+      notifyError(error, 'Unable to load templates.')
     } finally {
       setLoading(false)
     }
@@ -63,12 +63,12 @@ export default function Templates() {
         accent_color: ACCENT,
         is_default: templates.length === 0,
       })
-      notify('Modèle enregistré.')
+      notify('Template saved.')
       setCreating(false)
       setName('')
       await load()
     } catch (error) {
-      notifyError(error, 'Enregistrement impossible.')
+      notifyError(error, 'Unable to save template.')
     } finally {
       setWorking(false)
     }
@@ -77,10 +77,10 @@ export default function Templates() {
   const setDefault = async (template: CaptionTemplate) => {
     try {
       await api.templates.setDefault(template.id)
-      notify(`« ${template.name} » est maintenant le modèle par défaut.`)
+      notify(`“${template.name}” is now the default template.`)
       await load()
     } catch (error) {
-      notifyError(error, 'Modification impossible.')
+      notifyError(error, 'Unable to update template.')
     }
   }
 
@@ -89,11 +89,11 @@ export default function Templates() {
     setWorking(true)
     try {
       await api.templates.remove(deleting.id)
-      notify('Modèle supprimé.')
+      notify('Template deleted.')
       setDeleting(null)
       await load()
     } catch (error) {
-      notifyError(error, 'Suppression impossible.')
+      notifyError(error, 'Unable to delete template.')
     } finally {
       setWorking(false)
     }
@@ -103,18 +103,18 @@ export default function Templates() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Identité visuelle</p>
+          <p className="eyebrow">Visual identity</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-chalk sm:text-3xl">
-            Modèles de sous-titres
+            Caption templates
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
-            Enregistre un style, une taille et une position, puis applique-les en
-            un clic dans l’éditeur. Tes clips gardent la même signature visuelle
-            sans réglages à refaire à chaque fois.
+            Save a style, size, and position, then apply them in one click in
+            the editor. Your clips keep the same visual signature without
+            recreating your settings each time.
           </p>
         </div>
         <Button icon="plus" onClick={() => setCreating(true)}>
-          Nouveau modèle
+          New template
         </Button>
       </header>
 
@@ -127,11 +127,11 @@ export default function Templates() {
       ) : templates.length === 0 ? (
         <EmptyState
           icon="captions"
-          title="Aucun modèle enregistré"
-          description="Crée un modèle pour figer ton style de sous-titres et le réutiliser sur tous tes prochains Shorts."
+          title="No saved templates"
+          description="Create a template to lock in your caption style and reuse it across all your future clips."
           action={
             <Button icon="plus" onClick={() => setCreating(true)}>
-              Créer un modèle
+              Create template
             </Button>
           }
         />
@@ -171,7 +171,7 @@ export default function Templates() {
                   </div>
                   <IconButton
                     icon="trash"
-                    label={`Supprimer ${template.name}`}
+                    label={`Delete ${template.name}`}
                     size="sm"
                     onClick={() => setDeleting(template)}
                   />
@@ -180,7 +180,7 @@ export default function Templates() {
                 {template.is_default ? (
                   <p className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-positive-500/12 px-2 py-1 text-2xs font-medium text-positive-500">
                     <Icon name="check" size={11} />
-                    Appliqué par défaut
+                    Default template
                   </p>
                 ) : (
                   <Button
@@ -190,7 +190,7 @@ export default function Templates() {
                     block
                     onClick={() => setDefault(template)}
                   >
-                    Définir par défaut
+                    Set as default
                   </Button>
                 )}
               </div>
@@ -202,16 +202,16 @@ export default function Templates() {
       <Modal
         open={creating}
         onClose={() => setCreating(false)}
-        title="Nouveau modèle de sous-titres"
-        description="L’aperçu ci-dessous correspond exactement au rendu incrusté dans la vidéo."
+        title="New caption template"
+        description="The preview below matches exactly how captions are burned into the video."
         width="max-w-2xl"
         footer={
           <>
             <Button variant="ghost" onClick={() => setCreating(false)}>
-              Annuler
+              Cancel
             </Button>
             <Button onClick={create} loading={working} disabled={!name.trim()}>
-              Enregistrer le modèle
+              Save template
             </Button>
           </>
         }
@@ -228,10 +228,10 @@ export default function Templates() {
 
           <div className="space-y-4">
             <Field
-              label="Nom du modèle"
+              label="Template name"
               value={name}
               maxLength={80}
-              placeholder="Ex : Punch orange bas"
+              placeholder="E.g. Orange punch, bottom"
               onChange={(event) => setName(event.target.value)}
             />
 
@@ -261,7 +261,7 @@ export default function Templates() {
             </div>
 
             <SegmentedControl
-              legend="Taille"
+              legend="Size"
               value={size}
               onChange={setSize}
               options={(['small', 'medium', 'large'] as const).map((value) => ({
@@ -285,15 +285,15 @@ export default function Templates() {
       <Modal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        title="Supprimer ce modèle ?"
-        description="Les clips déjà exportés ne sont pas affectés."
+        title="Delete this template?"
+        description="Already exported clips will not be affected."
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeleting(null)}>
-              Annuler
+              Cancel
             </Button>
             <Button variant="danger" icon="trash" onClick={remove} loading={working}>
-              Supprimer
+              Delete
             </Button>
           </>
         }

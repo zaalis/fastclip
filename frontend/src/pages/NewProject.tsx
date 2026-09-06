@@ -34,7 +34,7 @@ function inspect(file: File): Promise<{ duration: number; previewUrl: string }> 
     element.onerror = () => {
       cleanup()
       URL.revokeObjectURL(url)
-      reject(new Error('Ce fichier ne peut pas être lu comme une vidéo.'))
+      reject(new Error('This file cannot be read as a video.'))
     }
     element.src = url
   })
@@ -84,7 +84,7 @@ export default function NewProject() {
 
       if (!extensions.includes(extension)) {
         setError(
-          `Format non supporté. Formats acceptés : ${extensions
+          `Unsupported format. Accepted formats: ${extensions
             .map((value) => value.replace('.', '').toUpperCase())
             .join(', ')}.`,
         )
@@ -92,7 +92,7 @@ export default function NewProject() {
       }
       if (file.size > maxMb * 1024 * 1024) {
         setError(
-          `Fichier trop lourd (${formatBytes(file.size)}). Limite : ${maxMb} Mo.`,
+          `File is too large (${formatBytes(file.size)}). Limit: ${maxMb} MB.`,
         )
         return
       }
@@ -103,7 +103,7 @@ export default function NewProject() {
         if (duration > maxSeconds + 0.5) {
           URL.revokeObjectURL(previewUrl)
           setError(
-            `Vidéo trop longue (${formatDuration(duration)}). Limite : ${Math.round(
+            `Video is too long (${formatDuration(duration)}). Limit: ${Math.round(
               maxSeconds / 60,
             )} minutes.`,
           )
@@ -114,7 +114,7 @@ export default function NewProject() {
         setName(file.name.replace(/\.[^.]+$/, '').slice(0, 140))
         setPhase('ready')
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Fichier illisible.')
+        setError(caught instanceof Error ? caught.message : 'Unreadable file.')
         setPhase('idle')
       }
     },
@@ -136,13 +136,13 @@ export default function NewProject() {
         abortRef.current.signal,
       )
       setPhase('done')
-      notify('Vidéo importée. Le traitement démarre.')
+      notify('Video uploaded. Processing is starting.')
       navigate(`/app/projets/${project.id}`)
     } catch (caught) {
       setPhase('ready')
       setProgress(0)
-      setError(caught instanceof Error ? caught.message : 'Import impossible.')
-      notifyError(caught, 'Import impossible.')
+      setError(caught instanceof Error ? caught.message : 'Upload failed.')
+      notifyError(caught, 'Upload failed.')
     }
   }
 
@@ -151,27 +151,26 @@ export default function NewProject() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
-        <p className="eyebrow">Nouveau projet</p>
+        <p className="eyebrow">New project</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-chalk sm:text-3xl">
-          Importer une vidéo
+          Upload a video
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          {maxSeconds / 60} minutes et {maxMb} Mo maximum. Ces limites gardent le
-          traitement rapide sur une petite machine et evitent les files d’attente
-          interminables.
+          Up to {maxSeconds / 60} minutes and {maxMb} MB. These limits keep
+          processing fast on a smaller machine and prevent long queues.
         </p>
       </header>
 
       {ffmpegMissing && (
-        <Alert tone="error" title="FFmpeg introuvable sur le serveur">
-          L’import est désactivé. Installe FFmpeg (ou le paquet Python
-          imageio-ffmpeg) puis relance le back-end.
+        <Alert tone="error" title="FFmpeg is unavailable on the server">
+          Upload is disabled. Install FFmpeg (or the Python imageio-ffmpeg
+          package), then restart the backend.
         </Alert>
       )}
 
       {error && (
         <div role="alert">
-          <Alert tone="error" title="Import refusé">
+          <Alert tone="error" title="Upload rejected">
             {error}
           </Alert>
         </div>
@@ -197,12 +196,12 @@ export default function NewProject() {
             <Icon name="upload" size={28} />
           </span>
           <h2 className="mt-5 text-lg font-semibold text-chalk">
-            {phase === 'checking' ? 'Lecture du fichier...' : 'Dépose ta vidéo ici'}
+            {phase === 'checking' ? 'Reading file...' : 'Drop your video here'}
           </h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-            Formats acceptés :{' '}
+            Accepted formats:{' '}
             {extensions.map((value) => value.replace('.', '').toUpperCase()).join(', ')}.
-            Le fichier est vérifié avant l’envoi.
+            The file is validated before upload.
           </p>
 
           <input
@@ -225,13 +224,13 @@ export default function NewProject() {
             disabled={ffmpegMissing}
             onClick={() => inputRef.current?.click()}
           >
-            Choisir un fichier
+            Choose a file
           </Button>
 
           <dl className="mt-8 grid w-full max-w-lg grid-cols-3 gap-3 text-left">
             {[
-              ['Durée max', `${maxSeconds / 60} min`],
-              ['Poids max', `${maxMb} Mo`],
+              ['Max length', `${maxSeconds / 60} min`],
+              ['Max size', `${maxMb} MB`],
               ['Export', `${limits?.export.width ?? 720} x ${limits?.export.height ?? 1280}`],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-ink-500 bg-ink-800 p-3">
@@ -251,24 +250,24 @@ export default function NewProject() {
                 muted
                 playsInline
                 preload="metadata"
-                aria-label="Aperçu de la vidéo sélectionnée"
+                aria-label="Selected video preview"
               />
 
               <div className="min-w-0">
                 <Field
-                  label="Nom du projet"
+                  label="Project name"
                   value={name}
                   maxLength={140}
                   disabled={phase === 'uploading'}
                   onChange={(event) => setName(event.target.value)}
-                  hint="Modifiable à tout moment depuis la page du projet."
+                  hint="You can change this at any time from the project page."
                 />
 
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   {[
-                    ['Fichier', candidate.file.name],
-                    ['Durée', formatDuration(candidate.duration)],
-                    ['Poids', formatBytes(candidate.file.size)],
+                    ['File', candidate.file.name],
+                    ['Length', formatDuration(candidate.duration)],
+                    ['Size', formatBytes(candidate.file.size)],
                     ['Type', candidate.file.type || 'video'],
                   ].map(([label, value]) => (
                     <div key={label}>
@@ -287,16 +286,16 @@ export default function NewProject() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 text-chalk">
                     <Icon name="upload" size={15} className="text-blue-400" />
-                    Téléversement en cours
+                    Uploading
                   </span>
                   <span className="font-semibold tabular-nums text-chalk">{progress}%</span>
                 </div>
                 <div className="mt-2.5">
-                  <ProgressBar value={progress} label="Téléversement" />
+                  <ProgressBar value={progress} label="Upload progress" />
                 </div>
                 <p className="mt-2 text-xs text-muted">
-                  Ne ferme pas cet onglet. Le traitement démarrera automatiquement une
-                  fois le transfert termine.
+                  Keep this tab open. Processing will start automatically once
+                  the upload is complete.
                 </p>
               </div>
             )}
@@ -312,15 +311,15 @@ export default function NewProject() {
                     setProgress(0)
                   }}
                 >
-                  Annuler l’envoi
+                  Cancel upload
                 </Button>
               ) : (
                 <>
                   <Button variant="ghost" onClick={reset}>
-                    Changer de fichier
+                    Change file
                   </Button>
                   <Button variant="accent" icon="bolt" onClick={upload} disabled={ffmpegMissing}>
-                    Lancer le traitement
+                    Start processing
                   </Button>
                 </>
               )}
@@ -332,10 +331,9 @@ export default function NewProject() {
       <div className="panel-quiet flex gap-3 p-4">
         <Icon name="shield" size={18} className="mt-0.5 shrink-0 text-positive-500" />
         <p className="text-xs leading-relaxed text-muted">
-          Ta vidéo est traitée sur le serveur Fastclip puis supprimée
-          automatiquement après {limits?.retention_hours ?? 24} heures. Seule la
-          transcription texte est envoyée au modèle d’analyse : le fichier vidéo ne
-          quitte jamais le serveur.
+          Your video is processed on the Fastclip server and automatically
+          deleted after {limits?.retention_hours ?? 24} hours. Only the text
+          transcript is sent to the analysis model: your video never leaves the server.
         </p>
       </div>
     </div>

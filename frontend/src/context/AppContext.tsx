@@ -12,6 +12,43 @@ import {
 import { api, ApiError, type SystemStatus, type User } from '../lib/api'
 import { Icon } from '../components/Icon'
 
+export type AppLanguage = 'en' | 'fr'
+
+interface LanguageValue {
+  language: AppLanguage
+  setLanguage: (language: AppLanguage) => void
+}
+
+const LanguageContext = createContext<LanguageValue | null>(null)
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguage] = useState<AppLanguage>(() => {
+    try {
+      return localStorage.getItem('fastclip.language') === 'fr' ? 'fr' : 'en'
+    } catch {
+      return 'en'
+    }
+  })
+
+  useEffect(() => {
+    document.documentElement.lang = language
+    try {
+      localStorage.setItem('fastclip.language', language)
+    } catch {
+      // Language choice remains active for this session.
+    }
+  }, [language])
+
+  const value = useMemo(() => ({ language, setLanguage }), [language])
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+}
+
+export function useLanguage(): LanguageValue {
+  const context = useContext(LanguageContext)
+  if (!context) throw new Error('useLanguage must be used inside LanguageProvider')
+  return context
+}
+
 // --- Auth -------------------------------------------------------------------
 
 interface AuthValue {

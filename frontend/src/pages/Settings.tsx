@@ -10,10 +10,10 @@ import { formatBytes, formatDate } from '../lib/format'
 type Tab = 'profil' | 'connexion' | 'securite' | 'donnees'
 
 const TABS: { id: Tab; label: string; icon: 'user' | 'sparkle' | 'lock' | 'shield' }[] = [
-  { id: 'profil', label: 'Profil', icon: 'user' },
-  { id: 'connexion', label: 'Connexion IA', icon: 'sparkle' },
-  { id: 'securite', label: 'Sécurité', icon: 'lock' },
-  { id: 'donnees', label: 'Données et confidentialité', icon: 'shield' },
+  { id: 'profil', label: 'Profile', icon: 'user' },
+  { id: 'connexion', label: 'AI connection', icon: 'sparkle' },
+  { id: 'securite', label: 'Security', icon: 'lock' },
+  { id: 'donnees', label: 'Data and privacy', icon: 'shield' },
 ]
 
 export default function Settings() {
@@ -83,11 +83,11 @@ export default function Settings() {
     setProfileError(null)
 
     if (username.trim().length < 2) {
-      setProfileError('Le pseudo doit faire au moins 2 caractères.')
+      setProfileError('Your username must be at least 2 characters.')
       return
     }
     if (!/^[^@\s]+@[^@\s.]+\.[^@\s]{2,}$/.test(email.trim())) {
-      setProfileError('Cette adresse email ne semble pas valide.')
+      setProfileError('This email address does not look valid.')
       return
     }
 
@@ -98,10 +98,10 @@ export default function Settings() {
         email: email.trim(),
       })
       setUser(next)
-      notify('Profil mis à jour.')
+      notify('Profile updated.')
     } catch (error) {
       setProfileError(
-        error instanceof ApiError ? error.message : 'Mise à jour impossible.',
+        error instanceof ApiError ? error.message : 'Update failed.',
       )
     } finally {
       setSavingProfile(false)
@@ -114,9 +114,9 @@ export default function Settings() {
       const { user: next } = await api.account.uploadAvatar(file)
       // Cache-bust so the new image shows immediately.
       setUser({ ...next, avatar_url: `${next.avatar_url}?v=${Date.now()}` })
-      notify('Photo de profil mise à jour.')
+      notify('Profile picture updated.')
     } catch (error) {
-      notifyError(error, 'Import de la photo impossible.')
+      notifyError(error, 'Unable to upload profile picture.')
     } finally {
       setAvatarBusy(false)
       if (avatarInput.current) avatarInput.current.value = ''
@@ -128,9 +128,9 @@ export default function Settings() {
     try {
       const { user: next } = await api.account.deleteAvatar()
       setUser(next)
-      notify('Photo de profil supprimée.')
+      notify('Profile picture removed.')
     } catch (error) {
-      notifyError(error, 'Suppression impossible.')
+      notifyError(error, 'Unable to remove profile picture.')
     } finally {
       setAvatarBusy(false)
     }
@@ -140,10 +140,10 @@ export default function Settings() {
     event.preventDefault()
     const errors: Record<string, string> = {}
     if (!currentPassword) errors.current = 'Entre ton mot de passe actuel.'
-    if (newPassword.length < 8) errors.next = 'Au moins 8 caractères.'
+    if (newPassword.length < 8) errors.next = 'Use at least 8 characters.'
     else if (/^\d+$/.test(newPassword) || /^[a-zA-Z]+$/.test(newPassword))
-      errors.next = 'Mélange lettres et chiffres.'
-    if (newPassword !== confirmPassword) errors.confirm = 'Les deux mots de passe différent.'
+      errors.next = 'Mix letters and numbers.'
+    if (newPassword !== confirmPassword) errors.confirm = 'The passwords do not match.'
 
     setPasswordErrors(errors)
     if (Object.keys(errors).length) return
@@ -151,7 +151,7 @@ export default function Settings() {
     setSavingPassword(true)
     try {
       await api.account.changePassword(currentPassword, newPassword)
-      notify('Mot de passe mis à jour.')
+      notify('Password updated.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -171,7 +171,7 @@ export default function Settings() {
     setApiKeyError(null)
     const value = apiKey.trim()
     if (value.length < 20) {
-      setApiKeyError('Entre une clé API Mistral valide.')
+      setApiKeyError('Enter a valid Mistral API key.')
       return
     }
 
@@ -182,10 +182,10 @@ export default function Settings() {
       setApiKey('')
       setShowApiKey(false)
       await refreshStatus()
-      notify('Connexion Mistral activée pour ton compte.')
+      notify('Mistral connection activated for your account.')
     } catch (error) {
       setApiKeyError(
-        error instanceof ApiError ? error.message : 'Impossible de connecter cette clé.',
+        error instanceof ApiError ? error.message : 'Unable to connect this key.',
       )
     } finally {
       setApiKeyBusy(false)
@@ -199,7 +199,7 @@ export default function Settings() {
       setApiKeyStatus(next)
       setApiKey('')
       await refreshStatus()
-      notify('Connexion Mistral retirée.', 'info')
+      notify('Mistral connection removed.', 'info')
     } catch (error) {
       notifyError(error, 'Impossible de retirer la connexion.')
     } finally {
@@ -215,10 +215,10 @@ export default function Settings() {
       const next = await api.account.updateApiModel(model)
       setApiKeyStatus(next)
       await refreshStatus()
-      notify('Modèle Mistral mis à jour. Les prochains projets utiliseront ce modèle.')
+      notify('Mistral model updated. Future projects will use this model.')
     } catch (error) {
       setModelError(
-        error instanceof ApiError ? error.message : 'Impossible de modifier le modèle.',
+        error instanceof ApiError ? error.message : 'Unable to update model.',
       )
     } finally {
       setModelBusy(false)
@@ -232,10 +232,10 @@ export default function Settings() {
       const next = await api.account.refreshApiModels()
       setApiKeyStatus(next)
       await refreshStatus()
-      notify('Liste des modèles Mistral actualisée.')
+      notify('Mistral model list refreshed.')
     } catch (error) {
       setModelError(
-        error instanceof ApiError ? error.message : 'Impossible d’actualiser les modèles.',
+        error instanceof ApiError ? error.message : 'Unable to refresh models.',
       )
     } finally {
       setModelBusy(false)
@@ -247,7 +247,7 @@ export default function Settings() {
     setDeleting(true)
     try {
       await api.account.deleteAccount(deletePassword)
-      notify('Compte supprimé. À bientôt.')
+      notify('Account deleted. See you soon.')
       await logout()
       navigate('/')
     } catch (error) {
@@ -266,19 +266,19 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <header>
-        <p className="eyebrow">Compte</p>
+        <p className="eyebrow">Account</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-chalk sm:text-3xl">
-          Paramètres
+          Settings
         </h1>
         <p className="mt-1.5 text-sm text-muted">
-          Membre depuis le {formatDate(user.created_at)}
+          Member since {formatDate(user.created_at)}
         </p>
       </header>
 
       <div
         className="flex gap-1 overflow-x-auto rounded-lg border border-ink-500 bg-ink-800 p-1 no-scrollbar"
         role="tablist"
-        aria-label="Sections des paramètres"
+        aria-label="Settings sections"
       >
         {TABS.map((item) => (
           <button
@@ -299,7 +299,7 @@ export default function Settings() {
       {tab === 'profil' && (
         <div className="space-y-5">
           <section className="panel p-5">
-            <h2 className="text-sm font-semibold text-chalk">Photo de profil</h2>
+            <h2 className="text-sm font-semibold text-chalk">Profile picture</h2>
             <div className="mt-4 flex flex-wrap items-center gap-5">
               <Avatar user={user} size={72} />
               <div className="flex flex-wrap gap-2">
@@ -308,6 +308,8 @@ export default function Settings() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   className="sr-only"
+                  aria-hidden="true"
+                  tabIndex={-1}
                   onChange={(event) => {
                     const file = event.target.files?.[0]
                     if (file) void uploadAvatar(file)
@@ -320,7 +322,7 @@ export default function Settings() {
                   loading={avatarBusy}
                   onClick={() => avatarInput.current?.click()}
                 >
-                  Importer une photo
+                  Upload picture
                 </Button>
                 {user.avatar_url && (
                   <Button
@@ -330,16 +332,16 @@ export default function Settings() {
                     loading={avatarBusy}
                     onClick={removeAvatar}
                   >
-                    Supprimer
+                    Remove
                   </Button>
                 )}
               </div>
             </div>
-            <p className="hint">JPEG, PNG ou WebP. 3 Mo maximum.</p>
+            <p className="hint">JPEG, PNG, or WebP. 3 MB maximum.</p>
           </section>
 
           <form onSubmit={saveProfile} className="panel space-y-5 p-5" noValidate>
-            <h2 className="text-sm font-semibold text-chalk">Informations</h2>
+            <h2 className="text-sm font-semibold text-chalk">Information</h2>
 
             {profileError && (
               <div role="alert">
@@ -348,25 +350,25 @@ export default function Settings() {
             )}
 
             <Field
-              label="Pseudo"
+              label="Username"
               value={username}
               maxLength={40}
               autoComplete="nickname"
               onChange={(event) => setUsername(event.target.value)}
-              hint="Affiche sur ton tableau de bord."
+              hint="Shown on your dashboard."
             />
             <Field
-              label="Adresse email"
+              label="Email address"
               type="email"
               value={email}
               autoComplete="email"
               onChange={(event) => setEmail(event.target.value)}
-              hint="Sert à te connecter."
+              hint="Used to sign in."
             />
 
             <div className="flex justify-end">
               <Button type="submit" loading={savingProfile}>
-                Enregistrer
+                Save
               </Button>
             </div>
           </form>
@@ -387,7 +389,7 @@ export default function Settings() {
                   <div>
                     <h2 className="text-base font-semibold text-chalk">Mistral AI</h2>
                     <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
-                      Connecte ta propre clé pour analyser tes transcriptions et générer tes trois meilleures propositions.
+                      Connect your own key to analyze transcripts and generate your three best suggestions.
                     </p>
                   </div>
                 </div>
@@ -403,7 +405,7 @@ export default function Settings() {
                       apiKeyStatus?.configured ? 'bg-positive-500' : 'bg-muted'
                     }`}
                   />
-                  {apiKeyStatus?.configured ? 'Connecté' : 'Non connecté'}
+                  {apiKeyStatus?.configured ? 'Connected' : 'Not connected'}
                 </span>
               </div>
             </div>
@@ -413,7 +415,7 @@ export default function Settings() {
                 <div className="space-y-4 rounded-xl border border-blue-500/25 bg-blue-500/8 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-medium text-blue-200">Clé active</p>
+                      <p className="text-xs font-medium text-blue-200">Active key</p>
                       <p className="mt-1 font-mono text-sm tracking-wide text-chalk">
                         {apiKeyStatus.masked}
                       </p>
@@ -434,7 +436,7 @@ export default function Settings() {
                     <div>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <label htmlFor="mistral-model" className="block text-sm font-medium text-chalk">
-                          Modèle d’analyse
+                          Analysis model
                         </label>
                         <Button
                           type="button"
@@ -459,7 +461,7 @@ export default function Settings() {
                           className="field h-11 cursor-pointer appearance-none pr-10 disabled:cursor-wait disabled:opacity-60"
                         >
                           <option value="" disabled>
-                            Choisir un modèle
+                            Choose a model
                           </option>
                           {apiKeyStatus.available_models.map((model) => (
                             <option key={model} value={model}>
@@ -474,28 +476,28 @@ export default function Settings() {
                         />
                       </div>
                       <p id="mistral-model-help" className="mt-2 text-xs leading-relaxed text-muted">
-                        Cette liste vient de Mistral. Fastclip vérifie uniquement le modèle que tu choisis avant de l’enregistrer.
+                        This list comes from Mistral. Fastclip only verifies the model you choose before saving it.
                       </p>
                       {modelError && <p className="mt-2 text-xs text-negative-500" role="alert">{modelError}</p>}
                     </div>
                   ) : (
-                    <Alert tone="warning" title="Modèles temporairement indisponibles">
-                      {apiKeyStatus.model_error ?? 'Mistral ne renvoie aucun modèle utilisable pour cette clé.'}
+                    <Alert tone="warning" title="Models temporarily unavailable">
+                      {apiKeyStatus.model_error ?? 'Mistral does not return a usable model for this key.'}
                     </Alert>
                   )}
                 </div>
               )}
 
               <Field
-                label={apiKeyStatus?.configured ? 'Nouvelle clé API' : 'Clé API Mistral'}
+                label={apiKeyStatus?.configured ? 'New API key' : 'Mistral API key'}
                 type={showApiKey ? 'text' : 'password'}
                 autoComplete="off"
                 spellCheck={false}
                 icon="lock"
-                placeholder="Colle ta clé Mistral"
+                placeholder="Paste your Mistral key"
                 value={apiKey}
                 error={apiKeyError}
-                hint="Elle sera vérifiée puis associée uniquement à ce compte. Elle ne sera plus affichée en clair."
+                hint="It will be verified and associated only with this account. It will not be displayed in plain text again."
                 onChange={(event) => {
                   setApiKey(event.target.value)
                   if (apiKeyError) setApiKeyError(null)
@@ -503,7 +505,7 @@ export default function Settings() {
                 trailing={
                   <button
                     type="button"
-                    aria-label={showApiKey ? 'Masquer la clé API' : 'Afficher la clé API'}
+                    aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
                     className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-ink-600 hover:text-chalk"
                     onClick={() => setShowApiKey((value) => !value)}
                   >
@@ -519,10 +521,10 @@ export default function Settings() {
                   rel="noreferrer"
                   className="link text-sm"
                 >
-                  Obtenir une clé Mistral
+                  Get a Mistral key
                 </a>
                 <Button type="submit" icon="check" loading={apiKeyBusy} disabled={!apiKey.trim()}>
-                  {apiKeyStatus?.configured ? 'Remplacer la clé' : 'Connecter ma clé'}
+                  {apiKeyStatus?.configured ? 'Replace key' : 'Connect my key'}
                 </Button>
               </div>
             </form>
@@ -531,7 +533,7 @@ export default function Settings() {
           <section className="panel-quiet flex gap-3 p-5 text-sm leading-relaxed text-muted">
             <Icon name="shield" size={18} className="mt-0.5 shrink-0 text-blue-400" />
             <p>
-              Fastclip utilise cette connexion seulement lors de l’analyse de tes projets. La vidéo et l’audio ne sont jamais envoyés à Mistral.
+              Fastclip uses this connection only when analyzing your projects. Video and audio are never sent to Mistral.
             </p>
           </section>
         </div>
@@ -541,10 +543,10 @@ export default function Settings() {
       {tab === 'securite' && (
         <div className="space-y-5">
           <form onSubmit={savePassword} className="panel space-y-5 p-5" noValidate>
-            <h2 className="text-sm font-semibold text-chalk">Changer de mot de passe</h2>
+            <h2 className="text-sm font-semibold text-chalk">Change password</h2>
 
             <Field
-              label="Mot de passe actuel"
+              label="Current password"
               type="password"
               autoComplete="current-password"
               icon="lock"
@@ -553,17 +555,17 @@ export default function Settings() {
               onChange={(event) => setCurrentPassword(event.target.value)}
             />
             <Field
-              label="Nouveau mot de passe"
+              label="New password"
               type="password"
               autoComplete="new-password"
               icon="lock"
               value={newPassword}
               error={passwordErrors.next}
               onChange={(event) => setNewPassword(event.target.value)}
-              hint="8 caractères minimum, lettres et chiffres."
+              hint="At least 8 characters, including letters and numbers."
             />
             <Field
-              label="Confirmer le nouveau mot de passe"
+              label="Confirm new password"
               type="password"
               autoComplete="new-password"
               icon="lock"
@@ -574,7 +576,7 @@ export default function Settings() {
 
             <div className="flex justify-end">
               <Button type="submit" loading={savingPassword}>
-                Mettre à jour
+                Update
               </Button>
             </div>
           </form>
@@ -582,7 +584,7 @@ export default function Settings() {
           <section className="panel p-5">
             <h2 className="text-sm font-semibold text-chalk">Session</h2>
             <p className="mt-1 text-xs leading-relaxed text-muted">
-              Déconnecte cet appareil lorsque tu as terminé, surtout sur un ordinateur partagé.
+              Sign out on this device when you are done, especially on a shared computer.
             </p>
             <Button
               className="mt-4"
@@ -593,15 +595,15 @@ export default function Settings() {
                 navigate('/')
               }}
             >
-              Se déconnecter
+              Sign out
             </Button>
           </section>
 
           <section className="panel border-negative-600/40 p-5">
-            <h2 className="text-sm font-semibold text-negative-500">Zone sensible</h2>
+            <h2 className="text-sm font-semibold text-negative-500">Danger zone</h2>
             <p className="mt-1 text-xs leading-relaxed text-muted">
-              La suppression du compte efface définitivement tes projets, tes
-              transcriptions, tes Shorts exportés et tous les fichiers associés.
+              Deleting your account permanently erases your projects, transcripts,
+              exported clips, and all associated files.
             </p>
             <Button
               className="mt-4"
@@ -609,7 +611,7 @@ export default function Settings() {
               icon="trash"
               onClick={() => setDeleteOpen(true)}
             >
-              Supprimer mon compte
+              Delete my account
             </Button>
           </section>
         </div>
@@ -623,12 +625,12 @@ export default function Settings() {
           ) : (
             <>
               <section className="panel p-5">
-                <h2 className="text-sm font-semibold text-chalk">Ce que Fastclip conserve</h2>
+                <h2 className="text-sm font-semibold text-chalk">What Fastclip retains</h2>
                 <dl className="mt-4 grid gap-4 sm:grid-cols-3">
                   {[
-                    ['Projets', String(privacy.counts.projects)],
-                    ['Clips exportés', String(privacy.counts.clips)],
-                    ['Projets avec fichiers actifs', String(privacy.counts.active_files)],
+                    ['Projects', String(privacy.counts.projects)],
+                    ['Clips exported', String(privacy.counts.clips)],
+                    ['Projects with active files', String(privacy.counts.active_files)],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-lg border border-ink-500 bg-ink-800 p-4">
                       <dt className="text-xs text-muted">{label}</dt>
@@ -639,7 +641,7 @@ export default function Settings() {
 
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-chalk">Stockage utilisé</span>
+                    <span className="text-chalk">Storage used</span>
                     <span className="tabular-nums text-muted">
                       {formatBytes(privacy.storage_bytes)} /{' '}
                       {formatBytes(privacy.storage_limit_bytes)}
@@ -649,7 +651,7 @@ export default function Settings() {
                     <ProgressBar
                       value={storagePercent}
                       tone={storagePercent > 85 ? 'flame' : 'blue'}
-                      label="Stockage utilisé"
+                      label="Storage used"
                     />
                   </div>
                 </div>
@@ -657,7 +659,7 @@ export default function Settings() {
 
               <section className="panel p-5">
                 <h2 className="text-sm font-semibold text-chalk">
-                  Confidentialité et suppression automatique
+                  Privacy and automatic deletion
                 </h2>
                 <ul className="mt-4 space-y-4">
                   {privacy.policy.map((item) => (
@@ -678,29 +680,29 @@ export default function Settings() {
 
               {status && (
                 <section className="panel p-5">
-                  <h2 className="text-sm font-semibold text-chalk">État du service</h2>
+                  <h2 className="text-sm font-semibold text-chalk">Service status</h2>
                   <dl className="mt-4 space-y-3 text-sm">
                     {[
                       {
-                        label: 'Analyse IA',
+                        label: 'AI analysis',
                         ok: status.ai.configured,
                         value: status.ai.configured
                           ? `Mistral ${status.ai.model}`
-                          : 'Connexion à configurer',
+                          : 'Connection needs setup',
                       },
                       {
                         label: 'Transcription',
                         ok: status.transcription.available,
                         value: status.transcription.available
                           ? `faster-whisper ${status.transcription.model} (${status.transcription.compute_type})`
-                          : 'Moteur non installe',
+                          : 'Engine not installed',
                       },
                       {
                         label: 'FFmpeg',
                         ok: status.ffmpeg.available,
                         value: status.ffmpeg.available
                           ? `Version ${status.ffmpeg.version}`
-                          : 'Introuvable',
+                          : 'Not found',
                       },
                     ].map((row) => (
                       <div
@@ -729,12 +731,12 @@ export default function Settings() {
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Supprimer définitivement ton compte ?"
-        description="Cette action est irréversible. Tous tes projets, transcriptions et Shorts seront effacés."
+        title="Permanently delete your account?"
+        description="This action cannot be undone. All your projects, transcripts, and exported clips will be erased."
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeleteOpen(false)}>
-              Annuler
+              Cancel
             </Button>
             <Button
               variant="danger"
@@ -743,13 +745,13 @@ export default function Settings() {
               disabled={!deletePassword}
               onClick={deleteAccount}
             >
-              Supprimer mon compte
+              Delete my account
             </Button>
           </>
         }
       >
         <Field
-          label="Confirme avec ton mot de passe"
+          label="Confirm with your password"
           type="password"
           autoComplete="current-password"
           icon="lock"

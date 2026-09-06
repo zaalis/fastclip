@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { api, type QueueSnapshot } from '../lib/api'
 import { statusMeta } from '../lib/status'
-import { useAuth, useToast } from '../context/AppContext'
+import { useAuth, useLanguage, useToast } from '../context/AppContext'
 import { Icon, type IconName } from './Icon'
 import { Avatar, Button, IconButton, Logo, LogoMark, ProgressBar } from './ui'
 
@@ -14,14 +14,24 @@ interface NavItem {
   end?: boolean
 }
 
-const NAV: NavItem[] = [
-  { to: '/app', label: 'Dashboard', icon: 'dashboard', end: true },
-  { to: '/app/nouveau', label: 'New project', icon: 'plus' },
-  { to: '/app/projets', label: 'My projects', icon: 'folder' },
-  { to: '/app/modeles', label: 'Caption templates', icon: 'captions' },
-  { to: '/app/corbeille', label: 'Trash', icon: 'trash' },
-  { to: '/app/aide', label: 'Help', icon: 'help' },
-]
+const NAV: Record<'en' | 'fr', NavItem[]> = {
+  en: [
+    { to: '/app', label: 'Dashboard', icon: 'dashboard', end: true },
+    { to: '/app/nouveau', label: 'New project', icon: 'plus' },
+    { to: '/app/projets', label: 'My projects', icon: 'folder' },
+    { to: '/app/modeles', label: 'Caption templates', icon: 'captions' },
+    { to: '/app/corbeille', label: 'Trash', icon: 'trash' },
+    { to: '/app/aide', label: 'Help', icon: 'help' },
+  ],
+  fr: [
+    { to: '/app', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/app/nouveau', label: 'Nouveau projet', icon: 'plus' },
+    { to: '/app/projets', label: 'Mes projets', icon: 'folder' },
+    { to: '/app/modeles', label: 'Modèles de sous-titres', icon: 'captions' },
+    { to: '/app/corbeille', label: 'Corbeille', icon: 'trash' },
+    { to: '/app/aide', label: 'Aide', icon: 'help' },
+  ],
+}
 
 /**
  * Polls the queue. Fast while something is running, lazy when idle - a 2 vCPU
@@ -64,12 +74,7 @@ function QueueIndicator({ queue }: { queue: QueueSnapshot | null }) {
   const waiting = queue?.items.filter((item) => item.status === 'queued').length ?? 0
 
   if (!queue || queue.items.length === 0) {
-    return (
-      <span className="hidden items-center gap-2 rounded-lg border border-ink-500 bg-ink-800 px-3 py-1.5 text-xs text-muted sm:inline-flex">
-        <span className="h-1.5 w-1.5 rounded-full bg-positive-500" aria-hidden="true" />
-        Queue clear
-      </span>
-    )
+    return null
   }
 
   return (
@@ -113,6 +118,7 @@ function SidebarContent({
   onNavigate?: () => void
 }) {
   const { user, logout } = useAuth()
+  const { language } = useLanguage()
   const { notifyError } = useToast()
   const navigate = useNavigate()
 
@@ -138,7 +144,7 @@ function SidebarContent({
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main navigation">
-        {NAV.map((item) => (
+        {NAV[language].map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -240,6 +246,7 @@ export function AppShell() {
     }
   })
   const { queue } = useQueue()
+  const { language, setLanguage } = useLanguage()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -323,6 +330,19 @@ export function AppShell() {
 
           <div className="ml-auto flex items-center gap-3">
             <QueueIndicator queue={queue} />
+            <label className="hidden items-center gap-2 rounded-lg border border-ink-500 bg-ink-800 px-2.5 py-1.5 text-xs text-muted sm:flex">
+              <Icon name="language" size={15} className="text-blue-400" />
+              <span className="sr-only">Language</span>
+              <select
+                aria-label="Language"
+                value={language}
+                onChange={(event) => setLanguage(event.target.value as 'en' | 'fr')}
+                className="cursor-pointer appearance-none bg-transparent pr-1 text-xs font-medium text-chalk outline-none"
+              >
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+              </select>
+            </label>
             <Button
               variant="accent"
               size="sm"

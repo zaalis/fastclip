@@ -63,7 +63,7 @@ def update_profile(payload: ProfileUpdateRequest, db: Session = Depends(get_db),
             )
             if taken is not None:
                 raise HTTPException(
-                    status_code=409, detail="Cette adresse email est déjà utilisée."
+                    status_code=409, detail="This email address is already in use."
                 )
             user.email = email
 
@@ -75,7 +75,7 @@ def update_profile(payload: ProfileUpdateRequest, db: Session = Depends(get_db),
 def change_password(payload: PasswordChangeRequest, db: Session = Depends(get_db),
                     user: User = Depends(current_user)):
     if not verify_password(user.password_hash, payload.current_password):
-        raise HTTPException(status_code=403, detail="Mot de passe actuel incorrect.")
+        raise HTTPException(status_code=403, detail="Current password is incorrect.")
 
     error = validate_password(payload.new_password)
     if error:
@@ -84,7 +84,7 @@ def change_password(payload: PasswordChangeRequest, db: Session = Depends(get_db
     user.password_hash = hash_password(payload.new_password)
     db.commit()
     # Every other device is signed out; this one keeps working.
-    return {"ok": True, "message": "Mot de passe mis à jour."}
+    return {"ok": True, "message": "Password updated."}
 
 
 def _api_key_status(user: User, models: list[str] | None = None) -> dict:
@@ -113,7 +113,7 @@ def _available_models_for_user(user: User, api_key: str, db: Session, *, refresh
     models = ai.available_models(api_key)
     if not models:
         raise ai.MistralError(
-            "Mistral ne renvoie aucun modèle de conversation pour cette clé."
+            "Mistral did not return a chat model for this key."
         )
     user.mistral_compatible_models_json = json.dumps(models)
     if user.mistral_model not in models:
@@ -145,7 +145,7 @@ def save_mistral_key(payload: MistralApiKeyRequest, db: Session = Depends(get_db
                      user: User = Depends(current_user)):
     api_key = payload.api_key.strip()
     if any(character.isspace() for character in api_key):
-        raise HTTPException(status_code=422, detail="La clé API contient un espace inattendu.")
+        raise HTTPException(status_code=422, detail="The API key contains unexpected whitespace.")
 
     try:
         models = ai.verify_api_key(api_key)
@@ -160,7 +160,7 @@ def save_mistral_key(payload: MistralApiKeyRequest, db: Session = Depends(get_db
     db.commit()
     return {
         **_api_key_status(user, models),
-        "message": "Clé API connectée à ton compte.",
+        "message": "API key connected to your account.",
     }
 
 
@@ -173,7 +173,7 @@ def update_mistral_model(
     try:
         api_key = decrypt_api_key(user.id, user.mistral_api_key_encrypted)
         if api_key is None:
-            raise HTTPException(status_code=409, detail="Connecte d’abord une clé API Mistral.")
+            raise HTTPException(status_code=409, detail="Connect a Mistral API key first.")
         models = _available_models_for_user(user, api_key, db)
     except SecretUnavailable as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -183,7 +183,7 @@ def update_mistral_model(
     if payload.model not in models:
         raise HTTPException(
             status_code=422,
-            detail="Ce modèle n’est pas autorisé pour cette clé Mistral.",
+            detail="This model is not available for this Mistral key.",
         )
     try:
         ai.verify_model_access(api_key, payload.model)
@@ -193,7 +193,7 @@ def update_mistral_model(
     db.commit()
     return {
         **_api_key_status(user, models),
-        "message": "Modèle Mistral mis à jour.",
+        "message": "Mistral model updated.",
     }
 
 
@@ -204,7 +204,7 @@ def refresh_mistral_models(
     try:
         api_key = decrypt_api_key(user.id, user.mistral_api_key_encrypted)
         if api_key is None:
-            raise HTTPException(status_code=409, detail="Connecte d’abord une clé API Mistral.")
+            raise HTTPException(status_code=409, detail="Connect a Mistral API key first.")
         models = _available_models_for_user(user, api_key, db, refresh=True)
     except SecretUnavailable as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -212,7 +212,7 @@ def refresh_mistral_models(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {
         **_api_key_status(user, models),
-        "message": "Liste des modèles mise à jour.",
+        "message": "Model list updated.",
     }
 
 
@@ -231,12 +231,12 @@ def upload_avatar(file: UploadFile = File(...), db: Session = Depends(get_db),
     if file.content_type not in _AVATAR_TYPES:
         raise HTTPException(
             status_code=415,
-            detail="Format d'image non supporté. Utilise un JPEG, un PNG ou un WebP.",
+            detail="Unsupported image format. Use JPEG, PNG, or WebP.",
         )
 
     data = file.file.read(_AVATAR_MAX_BYTES + 1)
     if len(data) > _AVATAR_MAX_BYTES:
-        raise HTTPException(status_code=413, detail="La photo ne doit pas dépasser 3 Mo.")
+        raise HTTPException(status_code=413, detail="The picture must not exceed 3 MB.")
     if not data:
         raise HTTPException(status_code=422, detail="Le fichier est vide.")
 
@@ -296,33 +296,32 @@ def privacy_data(db: Session = Depends(get_db), user: User = Depends(current_use
         "retention_hours": settings.retention_hours,
         "policy": [
             {
-                "title": "Suppression automatique",
+                "title": "Automatic deletion",
                 "detail": (
-                    f"Les vidéos importées et les exports sont supprimés "
-                    f"automatiquement {settings.retention_hours} heures après "
-                    "l'import. Les projets restent visibles, sans les fichiers."
+                    f"Uploaded videos and exports are automatically deleted "
+                    f"{settings.retention_hours} hours after upload. "
+                    "Projects remain visible without their files."
                 ),
             },
             {
-                "title": "Ce qui est envoyé à l'IA",
+                "title": "What is sent to AI",
                 "detail": (
-                    "Seule la transcription texte et ses horodatages sont envoyés "
-                    "au modèle d'analyse. Ni la vidéo, ni l'audio ne quittent le "
-                    "serveur."
+                    "Only the text transcript and its timestamps are sent to the "
+                    "analysis model. Neither the video nor the audio leaves the server."
                 ),
             },
             {
-                "title": "Traitement local",
+                "title": "Local processing",
                 "detail": (
-                    "L'extraction audio, la transcription et l'encodage sont "
-                    "exécutés sur le serveur Fastclip, pas chez un tiers."
+                    "Audio extraction, transcription, and encoding run on the "
+                    "Fastclip server, not with a third party."
                 ),
             },
             {
-                "title": "Connexion IA personnelle",
+                "title": "Personal AI connection",
                 "detail": (
-                    "Ta connexion Mistral est liée uniquement à ton compte et "
-                    "n'est utilisée que pour analyser tes transcriptions."
+                    "Your Mistral connection is linked only to your account and is "
+                    "used only to analyze your transcripts."
                 ),
             },
         ],
@@ -333,7 +332,7 @@ def privacy_data(db: Session = Depends(get_db), user: User = Depends(current_use
 def delete_account(payload: AccountDeleteRequest, response: Response,
                    db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not verify_password(user.password_hash, payload.password):
-        raise HTTPException(status_code=403, detail="Mot de passe incorrect.")
+        raise HTTPException(status_code=403, detail="Password is incorrect.")
 
     user_id = user.id
     destroy_all_sessions(db, user_id)

@@ -49,6 +49,7 @@ export type IconName =
   | 'target'
   | 'layers'
   | 'info'
+  | 'language'
 
 const PATHS: Record<IconName, JSX.Element> = {
   bolt: <path d="M13.5 3 5 13.5h5L9.5 21 18 10.5h-5L13.5 3Z" />,
@@ -274,6 +275,12 @@ const PATHS: Record<IconName, JSX.Element> = {
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 11v5.2" />
       <path d="M12 7.9h.01" />
+    </>
+  ),
+  language: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.4 8.8 12S9.9 5.8 12 3.5Z" />
     </>
   ),
 }

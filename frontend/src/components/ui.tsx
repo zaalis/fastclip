@@ -63,7 +63,7 @@ export function Logo({
 
   if (!asLink) return inner
   return (
-    <Link to={to} className="rounded-lg" aria-label="Fastclip, accueil">
+      <Link to={to} className="rounded-lg" aria-label="Fastclip home">
       {inner}
     </Link>
   )

@@ -11,56 +11,56 @@ import type { ProjectStatus } from '../lib/api'
 const STAGES: { icon: IconName; title: string; body: string }[] = [
   {
     icon: 'upload',
-    title: '1. Import et vérification',
-    body: 'Le fichier est vérifié (format, poids, durée, présence d’une piste audio) avant d’être accepte, puis écrit sur le disque par morceaux : un gros fichier n’est jamais chargé entièrement en mémoire.',
+    title: '1. Upload and validation',
+    body: 'The file is checked for format, size, duration, and an audio track before it is accepted. It is written to disk in chunks, so large files are never fully loaded into memory.',
   },
   {
     icon: 'wave',
-    title: '2. Extraction audio et transcription',
-    body: 'L’audio est extrait en mono 16 kHz, le format exact attendu par le moteur de transcription. faster-whisper produit ensuite le texte, les horodatages par segment et par mot, et la langue détectée.',
+    title: '2. Audio extraction and transcription',
+    body: 'Audio is extracted as 16 kHz mono, the format expected by the transcription engine. faster-whisper then produces text, segment and word timestamps, and the detected language.',
   },
   {
     icon: 'sparkle',
-    title: '3. Analyse de la transcription',
-    body: 'Seuls le texte et les horodatages sont envoyés au modèle d’analyse. Il renvoie exactement trois propositions, que Fastclip vérifie ensuite contre la transcription réelle : un horodatage inventé est rejeté.',
+    title: '3. Transcript analysis',
+    body: 'Only text and timestamps are sent to the analysis model. It returns exactly three suggestions, which Fastclip verifies against the actual transcript: invented timestamps are rejected.',
   },
   {
     icon: 'scissors',
-    title: '4. Ajustement',
-    body: 'Tu deplaces le début et la fin, tu peux les aligner sur une phrase, choisir le style de sous-titres et modifier le titre, la légende et les hashtags.',
+    title: '4. Fine-tuning',
+    body: 'Move the start and end points, align them to a sentence, choose a caption style, and edit the title, caption, and hashtags.',
   },
   {
     icon: 'film',
     title: '5. Export',
-    body: 'FFmpeg découpe le passage, recadre au centre en 9:16, met à l’échelle en 720 x 1280, incruste les sous-titres et encode en H.264. Un fichier .srt est généré en parallèle.',
+    body: 'FFmpeg trims the segment, center-crops it to 9:16, scales it to 720 × 1280, burns in captions, and encodes it in H.264. An .srt file is generated alongside it.',
   },
 ]
 
 const FAQ = [
   {
-    question: 'Pourquoi seulement 3 propositions ?',
+    question: 'Why only 3 suggestions?',
     answer:
-      'Trois options, c’est assez pour comparer et assez peu pour decider vite. Au-delà, le choix devient une corvée et l’outil ralentit le montage au lieu de l’accélérer.',
+      'Three options are enough to compare and few enough to decide quickly. Beyond that, choosing becomes a chore and the tool slows editing down instead of speeding it up.',
   },
   {
-    question: 'Pourquoi une seule tâche à la fois ?',
+    question: 'Why one job at a time?',
     answer:
-      'Fastclip est conçu pour tourner sur une petite machine (2 vCPU, 8 Go). Lancer deux encodages ou deux transcriptions en parallèle rendrait les deux plus lents et risquerait de saturer la mémoire. La file d’attente affiche toujours ta position.',
+      'Fastclip is designed to run on a small machine (2 vCPU, 8 GB). Running two encodes or transcriptions in parallel would make both slower and could exhaust memory. The queue always shows your position.',
   },
   {
-    question: 'Que devient ma vidéo ?',
+    question: 'What happens to my video?',
     answer:
-      'Elle reste sur le serveur Fastclip pendant le traitement, puis elle est supprimée automatiquement 24 heures après l’import, avec ses exports. Ni la vidéo ni l’audio ne sont envoyés à un service tiers : seule la transcription texte part à l’analyse.',
+      'It stays on the Fastclip server during processing, then is automatically deleted 24 hours after upload together with its exports. Neither the video nor audio is sent to a third-party service: only the text transcript is analyzed.',
   },
   {
-    question: 'Pourquoi mon export est-il refusé ?',
+    question: 'Why is my export rejected?',
     answer:
-      'Les causes les plus fréquentes : la vidéo dépasse 10 minutes ou 250 Mo, elle n’a pas de piste audio, le fichier source a déjà été supprimé automatiquement, ou l’espace de stockage du compte est plein.',
+      'The most common causes are a video over 10 minutes or 250 MB, no audio track, an automatically deleted source file, or a full account storage quota.',
   },
   {
-    question: 'Puis-je recadrer autrement qu’au centre ?',
+    question: 'Can I crop somewhere other than the center?',
     answer:
-      'Pas encore. La V1 recadre au centre, ce qui convient a la majorité des vidéos parlées. Le recadrage est isolé dans une seule fonction côté serveur pour permettre d’ajouter plus tard un suivi automatique du visage.',
+      'Not yet. Version 1 center-crops, which suits most talking videos. Cropping is isolated in one server-side function so automatic face tracking can be added later.',
   },
 ]
 
@@ -71,26 +71,25 @@ export default function Help() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <header>
-        <p className="eyebrow">Aide</p>
+        <p className="eyebrow">Help</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-chalk sm:text-3xl">
-          Comment fonctionne Fastclip
+          How Fastclip works
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
-          Le détail de chaque étape, les limites en vigueur sur cette installation
-          et les réponses aux questions les plus fréquentes.
+          Details for every step, the limits of this installation, and answers
+          to the most common questions.
         </p>
       </header>
 
       {status && !status.ai.configured && (
-        <Alert tone="warning" title="Analyse IA indisponible sur cette installation">
-          {status.ai.message} La transcription, l’éditeur et l’export fonctionnent
-          normalement.
+        <Alert tone="warning" title="AI analysis is unavailable on this installation">
+          {status.ai.message} Transcription, the editor, and export continue to work normally.
         </Alert>
       )}
 
       {/* Pipeline */}
       <section className="panel p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-chalk">Le parcours d’une vidéo</h2>
+        <h2 className="text-base font-semibold text-chalk">A video’s journey</h2>
         <ol className="mt-5 space-y-5">
           {STAGES.map((stage) => (
             <li key={stage.title} className="flex gap-4">
@@ -108,10 +107,10 @@ export default function Help() {
 
       {/* Status vocabulary */}
       <section className="panel p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-chalk">Les statuts d’un projet</h2>
+        <h2 className="text-base font-semibold text-chalk">Project statuses</h2>
         <p className="mt-1 text-sm text-muted">
-          Chaque statut associe toujours une icône et un libellé : la couleur n’est
-          jamais la seule information.
+          Every status always combines an icon and a label: color is never the
+          only source of information.
         </p>
         <dl className="mt-5 grid gap-3 sm:grid-cols-2">
           {(Object.entries(STATUS_META) as [ProjectStatus, (typeof STATUS_META)[ProjectStatus]][]).map(
@@ -151,23 +150,23 @@ export default function Help() {
       {status && (
         <section className="panel p-5 sm:p-6">
           <h2 className="text-base font-semibold text-chalk">
-            Limites de cette installation
+            Installation limits
           </h2>
           <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              ['Durée maximale', formatDuration(status.limits.max_duration_seconds)],
-              ['Poids maximal', `${status.limits.max_upload_mb} Mo`],
-              ['Formats acceptés', status.limits.allowed_extensions.join(', ')],
+              ['Maximum duration', formatDuration(status.limits.max_duration_seconds)],
+              ['Maximum size', `${status.limits.max_upload_mb} MB`],
+              ['Accepted formats', status.limits.allowed_extensions.join(', ')],
               [
-                'Résolution d’export',
+                'Export resolution',
                 `${status.limits.export.width} x ${status.limits.export.height}`,
               ],
               ['Codec', status.limits.export.codec],
-              ['Tâches simultanées', String(status.limits.concurrent_jobs)],
-              ['Conservation des fichiers', `${status.limits.retention_hours} heures`],
-              ['Stockage par compte', `${status.limits.max_storage_per_user_mb} Mo`],
+              ['Concurrent jobs', String(status.limits.concurrent_jobs)],
+              ['File retention', `${status.limits.retention_hours} hours`],
+              ['Storage per account', `${status.limits.max_storage_per_user_mb} MB`],
               [
-                'Moteur de transcription',
+                'Transcription engine',
                 `${status.transcription.model} / ${status.transcription.compute_type}`,
               ],
             ].map(([label, value]) => (
@@ -183,7 +182,7 @@ export default function Help() {
       {/* FAQ */}
       <section className="panel overflow-hidden">
         <h2 className="border-b border-ink-500 p-5 text-base font-semibold text-chalk sm:px-6">
-          Questions fréquentes
+          Frequently asked questions
         </h2>
         <ul>
           {FAQ.map((item, index) => {
@@ -219,14 +218,14 @@ export default function Help() {
 
       <section className="panel flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
         <div>
-          <h2 className="text-sm font-semibold text-chalk">Prêt à essayer ?</h2>
+          <h2 className="text-sm font-semibold text-chalk">Ready to try it?</h2>
           <p className="mt-1 text-sm text-muted">
-            Importe une vidéo et vois les trois propositions en quelques minutes.
+            Upload a video and see three suggestions in minutes.
           </p>
         </div>
         <Link to="/app/nouveau">
           <Button variant="accent" icon="upload">
-            Importer une vidéo
+            Upload a video
           </Button>
         </Link>
       </section>

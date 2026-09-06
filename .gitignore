@@ -6,6 +6,7 @@
 .env
 .env.*
 !.env.example
+/Login Fastclip.txt
 backend/.env
 backend/.env.*
 !backend/.env.example

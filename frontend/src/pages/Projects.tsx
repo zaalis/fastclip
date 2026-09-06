@@ -92,7 +92,7 @@ function ProjectCard({
           <div className="relative" ref={menuRef}>
             <IconButton
               icon="more"
-              label={`Actions pour ${project.name}`}
+              label={`Actions for ${project.name}`}
               size="sm"
               aria-expanded={menuOpen}
               aria-haspopup="menu"
@@ -105,12 +105,12 @@ function ProjectCard({
               >
                 {[
                   {
-                    label: 'Ouvrir',
+                    label: 'Open',
                     icon: 'arrow-right' as const,
                     onClick: () => navigate(`/app/projets/${project.id}`),
                   },
                   {
-                    label: 'Renommer',
+                    label: 'Rename',
                     icon: 'edit' as const,
                     onClick: () => onRename(project),
                   },
@@ -138,7 +138,7 @@ function ProjectCard({
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-negative-500 transition-colors hover:bg-negative-700/40"
                 >
                   <Icon name="trash" size={15} />
-                  Supprimer
+                  Delete
                 </button>
               </div>
             )}
@@ -152,7 +152,7 @@ function ProjectCard({
           </div>
           <span aria-hidden="true">&middot;</span>
           <div className="flex items-center gap-1">
-            <dt className="sr-only">Clips créés</dt>
+            <dt className="sr-only">Clips created</dt>
             <Icon name="film" size={11} />
             <dd>
               {project.clip_count} clip{project.clip_count > 1 ? 's' : ''}
@@ -166,7 +166,7 @@ function ProjectCard({
               value={project.progress}
               size="sm"
               tone={project.status === 'rendering' ? 'flame' : 'blue'}
-              label={`Progression de ${project.name}`}
+              label={`${project.name} progress`}
             />
             <p className="mt-1.5 text-xs text-muted">
               {project.stage_detail ?? meta.description}
@@ -182,12 +182,12 @@ function ProjectCard({
 
         {project.files_purged ? (
           <p className="mt-auto pt-3 text-2xs text-muted">
-            Fichiers supprimés automatiquement
+            Files deleted automatically
           </p>
         ) : expiry ? (
           <p className="mt-auto flex items-center gap-1 pt-3 text-2xs text-muted">
             <Icon name="clock" size={11} />
-            Suppression {expiry}
+            Deletion {expiry}
           </p>
         ) : null}
       </div>
@@ -213,7 +213,7 @@ export default function Projects() {
         const { projects: next } = await api.projects.list()
         setProjects(next)
       } catch (error) {
-        if (!quiet) notifyError(error, 'Impossible de charger les projets.')
+        if (!quiet) notifyError(error, 'Unable to load projects.')
       } finally {
         setLoading(false)
       }
@@ -236,11 +236,11 @@ export default function Projects() {
     setWorking(true)
     try {
       await api.projects.rename(renaming.id, renameValue.trim())
-      notify('Projet renommé.')
+      notify('Project renamed.')
       setRenaming(null)
       await load(true)
     } catch (error) {
-      notifyError(error, 'Renommage impossible.')
+      notifyError(error, 'Unable to rename project.')
     } finally {
       setWorking(false)
     }
@@ -251,11 +251,11 @@ export default function Projects() {
     setWorking(true)
     try {
       await api.projects.remove(deleting.id)
-      notify('Projet déplacé dans la corbeille.')
+      notify('Project moved to trash.')
       setDeleting(null)
       await load(true)
     } catch (error) {
-      notifyError(error, 'Suppression impossible.')
+      notifyError(error, 'Unable to delete project.')
     } finally {
       setWorking(false)
     }
@@ -271,17 +271,17 @@ export default function Projects() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Bibliothèque</p>
+          <p className="eyebrow">Library</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-chalk sm:text-3xl">
-            Mes projets
+            My projects
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            {projects.length} projet{projects.length > 1 ? 's' : ''} &middot; les
-            fichiers sont supprimés automatiquement après 24 h
+            {projects.length} project{projects.length > 1 ? 's' : ''} &middot; files
+            are deleted automatically after 24 h
           </p>
         </div>
         <Button variant="accent" icon="upload" onClick={() => navigate('/app/nouveau')}>
-          Importer une vidéo
+          Upload a video
         </Button>
       </header>
 
@@ -289,7 +289,7 @@ export default function Projects() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[14rem] flex-1">
             <label htmlFor="project-search" className="sr-only">
-              Rechercher un projet
+              Search projects
             </label>
             <div className="relative">
               <Icon
@@ -302,7 +302,7 @@ export default function Projects() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Rechercher un projet"
+                placeholder="Search projects"
                 className="field pl-10"
               />
             </div>
@@ -311,12 +311,12 @@ export default function Projects() {
           <div
             className="flex rounded-lg border border-ink-500 bg-ink-800 p-1"
             role="group"
-            aria-label="Affichage"
+            aria-label="View"
           >
             {(
               [
-                ['grid', 'dashboard', 'Grille'],
-                ['list', 'menu', 'Liste'],
+                ['grid', 'dashboard', 'Grid'],
+                ['list', 'menu', 'List'],
               ] as const
             ).map(([value, icon, label]) => (
               <button
@@ -343,22 +343,22 @@ export default function Projects() {
       ) : projects.length === 0 ? (
         <EmptyState
           icon="folder"
-          title="Aucun projet pour l’instant"
-          description="Chaque vidéo importée devient un projet : transcription, propositions d’extraits et Shorts exportés restent groupés au même endroit."
+          title="No projects yet"
+          description="Every uploaded video becomes a project: transcript, clip suggestions, and exported shorts stay together in one place."
           action={
             <Button size="lg" variant="accent" icon="upload" onClick={() => navigate('/app/nouveau')}>
-              Importer ma première vidéo
+              Upload my first video
             </Button>
           }
         />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon="folder"
-          title="Aucun résultat"
-          description={`Aucun projet ne correspond à "${query}".`}
+          title="No results"
+          description={`No project matches "${query}".`}
           action={
             <Button variant="secondary" onClick={() => setQuery('')}>
-              Effacer la recherche
+              Clear search
             </Button>
           }
         />
@@ -387,25 +387,25 @@ export default function Projects() {
       <Modal
         open={renaming !== null}
         onClose={() => setRenaming(null)}
-        title="Renommer le projet"
-        description="Ce nom sert aussi de base au nom du fichier exporte."
+        title="Rename project"
+        description="This name is also used as the basis for exported file names."
         footer={
           <>
             <Button variant="ghost" onClick={() => setRenaming(null)}>
-              Annuler
+              Cancel
             </Button>
             <Button
               onClick={submitRename}
               loading={working}
               disabled={!renameValue.trim()}
             >
-              Enregistrer
+              Save
             </Button>
           </>
         }
       >
         <Field
-          label="Nom du projet"
+          label="Project name"
           value={renameValue}
           maxLength={140}
           onChange={(event) => setRenameValue(event.target.value)}
@@ -418,22 +418,22 @@ export default function Projects() {
       <Modal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        title="Supprimer ce projet ?"
-        description="Le projet, sa transcription, ses propositions et ses Shorts exportés seront supprimés définitivement."
+        title="Delete this project?"
+        description="The project, transcript, suggestions, and exported clips will be permanently deleted."
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeleting(null)}>
-              Annuler
+              Cancel
             </Button>
             <Button variant="danger" icon="trash" onClick={submitDelete} loading={working}>
-              Supprimer définitivement
+              Delete permanently
             </Button>
           </>
         }
       >
         <p className="rounded-lg border border-negative-600/40 bg-negative-700/20 p-3.5 text-sm text-chalk">
-          <span className="font-semibold">{deleting?.name}</span> et tous ses fichiers
-          seront effacés du serveur. Cette action est irréversible.
+          <span className="font-semibold">{deleting?.name}</span> and all associated files
+          will be erased from the server. This action cannot be undone.
         </p>
       </Modal>
     </div>
